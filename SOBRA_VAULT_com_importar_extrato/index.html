@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VAULT // X — Quantum Wealth & Expense OS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="theme-emerald">
+  <!-- Glowing Ambient Background Canvas -->
+  <canvas id="ambientCanvas"></canvas>
+
+  <!-- Top App Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <div class="brand-title">VAULT<span class="brand-x">//X</span></div>
+          <div class="brand-subtitle">WEALTH ARCHITECT &bull; v3.2</div>
+        </div>
+      </div>
+
+      <!-- Financial Health Score Badge -->
+      <div class="health-badge" id="healthBadge" title="Seu Score de Saúde Financeira">
+        <div class="score-circle">
+          <svg width="34" height="34" viewBox="0 0 36 36">
+            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+            <path class="circle-fill" id="scoreCircleFill" stroke-dasharray="88, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+          </svg>
+          <span class="score-number" id="healthScoreNum">88</span>
+        </div>
+        <div class="health-text">
+          <span class="health-label">FINANCIAL HEALTH</span>
+          <span class="health-status" id="healthStatusText">DOMINANDO O JOGO</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-right">
+      <!-- Currency Switcher -->
+      <div class="pill-group">
+        <button class="pill-btn active" data-currency="BRL">R$ BRL</button>
+        <button class="pill-btn" data-currency="USD">$ USD</button>
+        <button class="pill-btn" data-currency="EUR">€ EUR</button>
+      </div>
+
+      <!-- Theme Selector -->
+      <div class="theme-dropdown">
+        <button class="icon-btn" id="themeDropdownBtn" title="Alterar Estilo Visual">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>
+          </svg>
+        </button>
+        <div class="dropdown-menu" id="themeMenu">
+          <button class="menu-item active" data-theme="theme-emerald">● ONYX EMERALD (Cyber Green)</button>
+          <button class="menu-item" data-theme="theme-cyberpunk">● NEON TOKYO (Purple & Cyan)</button>
+          <button class="menu-item" data-theme="theme-gold">● ROYAL GOLD (Luxury)</button>
+          <button class="menu-item" data-theme="theme-midnight">● DEEP MIDNIGHT (Minimal Dark)</button>
+        </div>
+      </div>
+
+      <!-- Audio SFX Toggle -->
+      <button class="icon-btn" id="audioToggleBtn" title="Ativar/Desativar Efeitos Sonoros">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="audioIcon">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+
+      <!-- New Transaction Button -->
+      <button class="cta-primary-btn" id="openAddModalBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>NOVO LANÇAMENTO</span>
+        <kbd class="kbd-hint">N</kbd>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="dashboard-wrapper">
+
+    <!-- ROW 1: Hero Deck (3D Virtual Card + Big Stats) -->
+    <section class="hero-deck">
+      <!-- 3D Holographic Card Viewport -->
+      <div class="card-showcase">
+        <div class="showcase-header">
+          <span class="showcase-title">// CARTÃO VIRTUAL QUÂNTICO</span>
+          <div class="card-skin-selector">
+            <button class="skin-btn active" data-skin="emerald" title="Emerald Pass"></button>
+            <button class="skin-btn" data-skin="cyber" title="Cyber Aurora"></button>
+            <button class="skin-btn" data-skin="gold" title="Gold Reserve"></button>
+            <button class="skin-btn" data-skin="onyx" title="Onyx Black"></button>
+          </div>
+        </div>
+
+        <!-- 3D Tilting Card -->
+        <div class="card-perspective">
+          <div class="virtual-card skin-emerald" id="virtualCard">
+            <div class="card-glare"></div>
+            <div class="card-circuit-bg"></div>
+
+            <div class="card-top">
+              <div class="card-chip-container">
+                <div class="card-emv-chip"></div>
+                <div class="contactless-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8.5 16.5a5 5 0 0 1 0-9"/>
+                    <path d="M12 19a8.5 8.5 0 0 0 0-14"/>
+                    <path d="M15.5 21.5a12 12 0 0 0 0-19"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="card-network-logo">
+                <span class="logo-circle c1"></span>
+                <span class="logo-circle c2"></span>
+              </div>
+            </div>
+
+            <div class="card-balance-block">
+              <span class="card-bal-label">SALDO DISPONÍVEL</span>
+              <div class="card-bal-amount" id="cardBalanceDisplay">R$ 2.450,00</div>
+            </div>
+
+            <div class="card-bottom">
+              <div class="card-holder-info">
+                <span class="holder-label">TITULAR</span>
+                <span class="holder-name" id="cardHolderName">GUSTAVO X. &bull; 17Y</span>
+              </div>
+              <div class="card-number-info">
+                <span class="holder-label">NÚMERO VIRTUAL</span>
+                <span class="card-digits" id="cardDigitsDisplay">&bull;&bull;&bull;&bull; 8839</span>
+                <button class="reveal-btn" id="revealCardBtn" title="Revelar/Ocultar dígitos">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="card-validity">
+                <span class="holder-label">VALIDADE</span>
+                <span class="valid-date">10/31</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Financial Metrics Bento -->
+      <div class="metrics-bento">
+        <!-- Metric: Saldo Líquido Total -->
+        <div class="metric-card primary-gradient">
+          <div class="metric-head">
+            <span class="metric-title">PATRIMÔNIO TOTAL</span>
+            <div class="trend-pill positive" id="balanceTrend">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+              <span>+18.4%</span>
+            </div>
+          </div>
+          <div class="metric-value big-number" id="totalBalanceVal">R$ 3.840,50</div>
+          <div class="metric-footer">
+            <span class="footer-hint">Livre de dívidas &bull; Rumo ao 1º Setup Gamer</span>
+          </div>
+        </div>
+
+        <!-- Metric: Entradas (Income) -->
+        <div class="metric-card">
+          <div class="metric-head">
+            <span class="metric-title">ENTRADAS DO MÊS</span>
+            <div class="icon-circle in">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+            </div>
+          </div>
+          <div class="metric-value text-emerald" id="totalIncomeVal">R$ 1.950,00</div>
+          <div class="metric-footer">
+            <span class="footer-hint" id="incomeDesc">Trampo Freelance + Mesada</span>
+          </div>
+        </div>
+
+        <!-- Metric: Saídas (Expenses) -->
+        <div class="metric-card">
+          <div class="metric-head">
+            <span class="metric-title">GASTOS DO MÊS</span>
+            <div class="icon-circle out">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            </div>
+          </div>
+          <div class="metric-value text-coral" id="totalExpenseVal">R$ 820,00</div>
+          <div class="metric-footer">
+            <div class="budget-mini-bar">
+              <div class="budget-fill" id="budgetUsageBar" style="width: 42%;"></div>
+            </div>
+            <span class="footer-hint" id="budgetUsageText">42% do limite mensal utilizado</span>
+          </div>
+        </div>
+
+        <!-- Metric: Runway / Dias de Rolê -->
+        <div class="metric-card">
+          <div class="metric-head">
+            <span class="metric-title">TAXA DE POUPANÇA & RUNWAY</span>
+            <div class="icon-circle rate">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+          </div>
+          <div class="metric-row-dual">
+            <div>
+              <span class="sub-label">TAXA GUARDADA</span>
+              <div class="metric-value text-cyan" id="savingsRateVal">58%</div>
+            </div>
+            <div class="divider-v"></div>
+            <div>
+              <span class="sub-label">DIAS DE SOBREVIVÊNCIA</span>
+              <div class="metric-value text-accent" id="runwayDaysVal">84 Dias</div>
+            </div>
+          </div>
+          <div class="metric-footer">
+            <span class="footer-hint">Seus ganhos cobrem 84 dias de gastos diários!</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 2: Smart Analytics (Doughnut Chart + High-Tech Cashflow Wave) -->
+    <section class="analytics-row">
+      <!-- Category Breakdown Chart -->
+      <div class="glass-panel chart-panel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-tag">// DISTRIBUIÇÃO INTELIGENTE</span>
+            <h3 class="panel-title">ONDE O DINHEIRO ESTÁ INDO?</h3>
+          </div>
+          <div class="badge-accent" id="topCategoryBadge">MAIOR GASTO: LANCHES (38%)</div>
+        </div>
+
+        <div class="doughnut-container">
+          <div class="chart-canvas-box">
+            <canvas id="categoryChartCanvas" width="260" height="260"></canvas>
+            <div class="chart-center-info">
+              <span class="center-label">TOTAL GASTO</span>
+              <span class="center-value" id="chartCenterTotal">R$ 820</span>
+            </div>
+          </div>
+
+          <div class="category-legend" id="categoryLegendList">
+            <!-- Dynamic Category Legend items will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Cashflow Wave Graph -->
+      <div class="glass-panel wave-panel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-tag">// FLUXO TEMPORAL</span>
+            <h3 class="panel-title">EVOLUÇÃO DO FLUXO FINANCEIRO</h3>
+          </div>
+          <div class="chart-legend-pills">
+            <span class="legend-dot in"></span><span>Entradas</span>
+            <span class="legend-dot out"></span><span>Gastos</span>
+          </div>
+        </div>
+
+        <div class="wave-canvas-wrapper">
+          <canvas id="cashflowCanvas" width="700" height="230"></canvas>
+        </div>
+
+        <div class="wave-footer-insights">
+          <div class="insight-item">
+            <span class="insight-icon">⚡</span>
+            <span>Você gastou <strong>22% menos</strong> do que na última semana. Mandou muito!</span>
+          </div>
+          <div class="insight-item">
+            <span class="insight-icon">🎯</span>
+            <span>Meta de guardar R$ 400 este mês já está <strong>90% concluída</strong>.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 3: The Time Machine // Compound Interest Simulator for Gen-Z -->
+    <section class="time-machine-section glass-panel">
+      <div class="time-machine-header">
+        <div class="tm-brand-tag">
+          <span class="pulse-spark">✨</span>
+          <span>MÁQUINA DO TEMPO FINANCEIRA // SIMULADOR 17 AOS 30 ANOS</span>
+        </div>
+        <h2 class="tm-title">O PODER EXPONENCIAL DE COMEÇAR AOS 17 ANOS</h2>
+        <p class="tm-desc">
+          Enquanto a maioria gasta tudo em skins ou futilidades, veja o que acontece se você investir o valor de 2 lanches por mês no CDI / Bolsa de Valores graças aos juros compostos:
+        </p>
+      </div>
+
+      <div class="tm-body-grid">
+        <!-- Interactive Controls -->
+        <div class="tm-controls-card">
+          <div class="tm-slider-group">
+            <div class="slider-head">
+              <span>APORTE MENSAL INVESTIDO</span>
+              <span class="slider-val text-emerald" id="tmMonthlyDisplay">R$ 150 / mês</span>
+            </div>
+            <input type="range" id="tmMonthlySlider" min="30" max="1500" step="10" value="150" class="vault-slider">
+            <div class="slider-stops">
+              <span>R$ 30 (1 Lanche)</span>
+              <span>R$ 500 (Gamer)</span>
+              <span>R$ 1.500 (Pro)</span>
+            </div>
+          </div>
+
+          <div class="tm-slider-group">
+            <div class="slider-head">
+              <span>TEMPO DE INVESTIMENTO</span>
+              <span class="slider-val text-cyan" id="tmYearsDisplay">8 Anos (Aos 25 Anos)</span>
+            </div>
+            <input type="range" id="tmYearsSlider" min="2" max="15" step="1" value="8" class="vault-slider">
+            <div class="slider-stops">
+              <span>2 Anos (19 anos)</span>
+              <span>8 Anos (25 anos)</span>
+              <span>13 Anos (30 anos)</span>
+            </div>
+          </div>
+
+          <div class="tm-slider-group">
+            <div class="slider-head">
+              <span>RENTABILIDADE ESTIMADA (AO ANO)</span>
+              <span class="slider-val text-accent" id="tmRateDisplay">11.5% ao ano (CDI/Tesouro)</span>
+            </div>
+            <input type="range" id="tmRateSlider" min="8" max="16" step="0.5" value="11.5" class="vault-slider">
+            <div class="slider-stops">
+              <span>8% Conservador</span>
+              <span>11.5% CDI Atual</span>
+              <span>16% Ações/Tech</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exponential Result Card & Milestone Badges -->
+        <div class="tm-results-card">
+          <div class="result-glow-box">
+            <span class="res-sub">PATRIMÔNIO ACUMULADO PROJETADO</span>
+            <div class="res-big-total text-emerald" id="tmTotalAccumulated">R$ 25.438,20</div>
+            <div class="res-breakdown-row">
+              <div class="res-col">
+                <span class="lbl">Tirado do seu bolso</span>
+                <span class="val" id="tmTotalInvested">R$ 14.400,00</span>
+              </div>
+              <div class="plus-icon">+</div>
+              <div class="res-col highlight-col">
+                <span class="lbl">Ganhos só de Juros Compostos</span>
+                <span class="val text-cyan" id="tmTotalInterest">R$ 11.038,20</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Milestones Unlocked -->
+          <div class="milestones-box">
+            <span class="milestone-title">// CONQUISTAS DESBLOQUEADAS COM ESSE PATRIMÔNIO:</span>
+            <div class="milestone-pills" id="milestonesContainer">
+              <div class="m-pill unlocked">
+                <span class="m-icon">💻</span>
+                <span>Setup Gamer Monstro (R$ 6k)</span>
+              </div>
+              <div class="m-pill unlocked">
+                <span class="m-icon">✈️</span>
+                <span>Viagem Internacional (R$ 12k)</span>
+              </div>
+              <div class="m-pill unlocked">
+                <span class="m-icon">🚗</span>
+                <span>Primeiro Carro ou Moto (R$ 20k)</span>
+              </div>
+              <div class="m-pill locked">
+                <span class="m-icon">🏖️</span>
+                <span>Independência Financeira (R$ 100k+)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 4: Ghost Expense Scanner & Dream Vault -->
+    <section class="twin-section">
+      <!-- Ghost Expense Scanner -->
+      <div class="glass-panel ghost-panel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-tag">// DETECTOR DE VAZAMENTOS</span>
+            <h3 class="panel-title">RAIO-X DE "GASTOS FANTASMAS"</h3>
+          </div>
+          <span class="badge-warning" id="ghostLeakBadge">R$ 3.840 / ANO EM MICRO-GASTOS</span>
+        </div>
+
+        <p class="panel-intro-text">
+          Pequenas compras e assinaturas parecem inofensivas todo mês, mas somadas em 1 ano equivalem ao preço de um iPhone novo ou uma viagem inteira. Marque o que você consome:
+        </p>
+
+        <div class="ghost-checklist" id="ghostChecklist">
+          <label class="ghost-item">
+            <input type="checkbox" checked data-cost="24" data-name="Spotify / Apple Music">
+            <div class="ghost-box">
+              <span class="check-mark"></span>
+              <div class="ghost-info">
+                <span class="ghost-name">Spotify / Música Streaming</span>
+                <span class="ghost-cycle">R$ 24,00 / mês</span>
+              </div>
+            </div>
+            <span class="ghost-yearly">R$ 288 / ano</span>
+          </label>
+
+          <label class="ghost-item">
+            <input type="checkbox" checked data-cost="45" data-name="Netflix / Max / Disney">
+            <div class="ghost-box">
+              <span class="check-mark"></span>
+              <div class="ghost-info">
+                <span class="ghost-name">Netflix / Streaming de Filmes</span>
+                <span class="ghost-cycle">R$ 45,00 / mês</span>
+              </div>
+            </div>
+            <span class="ghost-yearly">R$ 540 / ano</span>
+          </label>
+
+          <label class="ghost-item">
+            <input type="checkbox" checked data-cost="160" data-name="iFood & Lanches de Fim de Semana">
+            <div class="ghost-box">
+              <span class="check-mark"></span>
+              <div class="ghost-info">
+                <span class="ghost-name">iFood & Rolês de Hamburgueria</span>
+                <span class="ghost-cycle">R$ 160,00 / mês (R$ 40/sem)</span>
+              </div>
+            </div>
+            <span class="ghost-yearly">R$ 1.920 / ano</span>
+          </label>
+
+          <label class="ghost-item">
+            <input type="checkbox" checked data-cost="50" data-name="Game Pass / PS Plus / Steam">
+            <div class="ghost-box">
+              <span class="check-mark"></span>
+              <div class="ghost-info">
+                <span class="ghost-name">Game Pass / Skins de Jogos</span>
+                <span class="ghost-cycle">R$ 50,00 / mês</span>
+              </div>
+            </div>
+            <span class="ghost-yearly">R$ 600 / ano</span>
+          </label>
+
+          <label class="ghost-item">
+            <input type="checkbox" data-cost="40" data-name="Apps & Armazenamento Nuvem">
+            <div class="ghost-box">
+              <span class="check-mark"></span>
+              <div class="ghost-info">
+                <span class="ghost-name">iCloud / Google One / Assinaturas</span>
+                <span class="ghost-cycle">R$ 40,00 / mês</span>
+              </div>
+            </div>
+            <span class="ghost-yearly">R$ 480 / ano</span>
+          </label>
+        </div>
+
+        <div class="ghost-total-card">
+          <div class="ghost-summary">
+            <span>TOTAL DESSAS MICRO-DESPESAS:</span>
+            <span class="yearly-highlight text-coral" id="ghostTotalYear">R$ 3.348,00 por ano</span>
+          </div>
+          <button class="ghost-btn" id="optimizeGhostBtn">SIMULAR ECONOMIA DESSES ITENS</button>
+        </div>
+      </div>
+
+      <!-- Dream Vault (Metas Financeiras) -->
+      <div class="glass-panel vault-panel">
+        <div class="panel-head">
+          <div>
+            <span class="panel-tag">// COFRE DE METAS & DREAMS</span>
+            <h3 class="panel-title">SEUS SONHOS EM PROGRESSO</h3>
+          </div>
+          <button class="btn-micro" id="newGoalBtn">+ Nova Meta</button>
+        </div>
+
+        <div class="goals-list" id="goalsList">
+          <!-- Goal 1 -->
+          <div class="goal-card" data-goal-id="1">
+            <div class="goal-header">
+              <div class="goal-icon">🎮</div>
+              <div class="goal-details">
+                <h4 class="goal-name">Setup Gamer / Placa de Vídeo</h4>
+                <span class="goal-deadline">Meta: R$ 4.500 &bull; Faltam R$ 900</span>
+              </div>
+              <div class="goal-pct">80%</div>
+            </div>
+            <div class="goal-progress-track">
+              <div class="goal-progress-bar" style="width: 80%;"></div>
+            </div>
+            <div class="goal-action-row">
+              <span class="goal-cur">R$ 3.600 guardados</span>
+              <button class="deposit-mini-btn" data-goal="1">+ Guardar R$ 50</button>
+            </div>
+          </div>
+
+          <!-- Goal 2 -->
+          <div class="goal-card" data-goal-id="2">
+            <div class="goal-header">
+              <div class="goal-icon">✈️</div>
+              <div class="goal-details">
+                <h4 class="goal-name">Viagem de Fim de Ano com Amigos</h4>
+                <span class="goal-deadline">Meta: R$ 1.800 &bull; Faltam R$ 750</span>
+              </div>
+              <div class="goal-pct">58%</div>
+            </div>
+            <div class="goal-progress-track">
+              <div class="goal-progress-bar" style="width: 58%;"></div>
+            </div>
+            <div class="goal-action-row">
+              <span class="goal-cur">R$ 1.050 guardados</span>
+              <button class="deposit-mini-btn" data-goal="2">+ Guardar R$ 50</button>
+            </div>
+          </div>
+
+          <!-- Goal 3 (Completed) -->
+          <div class="goal-card completed" data-goal-id="3">
+            <div class="goal-header">
+              <div class="goal-icon">🛡️</div>
+              <div class="goal-details">
+                <h4 class="goal-name">Reserva de Emergência Blindada</h4>
+                <span class="goal-deadline">Meta: R$ 1.500 &bull; Concluída!</span>
+              </div>
+              <div class="goal-pct">100%</div>
+            </div>
+            <div class="goal-progress-track">
+              <div class="goal-progress-bar" style="width: 100%;"></div>
+            </div>
+            <div class="goal-action-row">
+              <span class="goal-cur text-emerald">R$ 1.500 guardados &bull; CONCLUÍDO! ✨</span>
+              <span class="badge-done">DESBLOQUEADO</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROW 5: Live Interactive Transaction Ledger -->
+    <section class="ledger-section glass-panel">
+      <div class="ledger-top-bar">
+        <div>
+          <span class="panel-tag">// EXTRATO EM TEMPO REAL</span>
+          <h3 class="panel-title">HISTÓRICO DE LANÇAMENTOS</h3>
+        </div>
+
+        <div class="ledger-controls">
+          <!-- Search Input -->
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="transactionSearchInput" placeholder="Buscar por nome, tag..." autocomplete="off">
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="filter-pills">
+            <button class="filter-pill active" data-filter="all">TODOS</button>
+            <button class="filter-pill" data-filter="income">ENTRADAS</button>
+            <button class="filter-pill" data-filter="expense">GASTOS</button>
+          </div>
+
+          <!-- Import bank statement (added; existing controls preserved) -->
+          <button class="btn-micro" id="importStatementBtn" title="Importar extrato do Banco Inter">IMPORTAR EXTRATO</button>
+          <input type="file" id="statementPdfInput" accept="application/pdf,.pdf" hidden>
+          <!-- Export JSON/CSV -->
+          <button class="btn-micro" id="exportDataBtn" title="Exportar Extrato">EXPORTAR</button>
+          <button class="btn-micro danger" id="resetDataBtn" title="Resetar Dados">RESET</button>
+        </div>
+      </div>
+
+      <!-- Table / Feed Container -->
+      <div class="table-container">
+        <table class="transaction-table">
+          <thead>
+            <tr>
+              <th>STATUS</th>
+              <th>DESCRIÇÃO</th>
+              <th>CATEGORIA</th>
+              <th>DATA</th>
+              <th>MÉTODO</th>
+              <th class="text-right">VALOR</th>
+              <th class="text-right">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="transactionTableBody">
+            <!-- Dynamic rows will be rendered here -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADD TRANSACTION -->
+  <div class="modal-overlay" id="addTxModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">NOVO LANÇAMENTO</h3>
+        <button class="close-modal-btn" id="closeAddModalBtn">&times;</button>
+      </div>
+
+      <form id="addTxForm" class="modal-form">
+        <!-- Type Selection: Expense or Income -->
+        <div class="type-selector">
+          <label class="type-btn active" data-type="expense">
+            <input type="radio" name="txType" value="expense" checked>
+            <span>💸 GASTO / SAÍDA</span>
+          </label>
+          <label class="type-btn" data-type="income">
+            <input type="radio" name="txType" value="income">
+            <span>💰 ENTRADA / GANHO</span>
+          </label>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label for="txDesc">Descrição do Lançamento</label>
+          <input type="text" id="txDesc" required placeholder="Ex: Steam Sale, Hamburguer com os amigos, Mesada..." autocomplete="off">
+        </div>
+
+        <!-- Amount & Category Grid -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="txAmount">Valor (R$)</label>
+            <input type="number" id="txAmount" required step="0.01" min="0.01" placeholder="0,00">
+          </div>
+
+          <div class="form-group">
+            <label for="txCategory">Categoria</label>
+            <select id="txCategory" required>
+              <option value="Lanches/Rolê">🍔 Lanches & Rolê</option>
+              <option value="Games/Skins">🎮 Games & Skins</option>
+              <option value="Assinaturas">📱 Assinaturas & Streaming</option>
+              <option value="Moda/Estilo">👟 Roupas & Estilo</option>
+              <option value="Estudos/Tech">📚 Livros, Cursos & Tech</option>
+              <option value="Transporte">🚲 Transporte & Uber</option>
+              <option value="Investimentos">📈 Investimento / Poupança</option>
+              <option value="Salário/Mesada">💼 Trampo / Mesada</option>
+              <option value="Outros">⚡ Outros</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Date & Payment Method -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="txDate">Data</label>
+            <input type="date" id="txDate" required>
+          </div>
+
+          <div class="form-group">
+            <label for="txMethod">Método</label>
+            <select id="txMethod">
+              <option value="PIX">⚡ PIX</option>
+              <option value="Cartão de Débito">💳 Cartão de Débito</option>
+              <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+              <option value="Dinheiro Físico">💵 Dinheiro</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="submit-tx-btn" id="saveTxBtn">REGISTRAR LANÇAMENTO</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD GOAL -->
+  <div class="modal-overlay" id="addGoalModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">NOVA META FINANCEIRA</h3>
+        <button class="close-modal-btn" id="closeGoalModalBtn">&times;</button>
+      </div>
+
+      <form id="addGoalForm" class="modal-form">
+        <div class="form-group">
+          <label for="goalNameInput">Nome do Sonho / Meta</label>
+          <input type="text" id="goalNameInput" required placeholder="Ex: Celular Novo, Carteira de Motorista, Curso...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="goalTargetInput">Valor Alvo (R$)</label>
+            <input type="number" id="goalTargetInput" required step="1" min="10" placeholder="2500">
+          </div>
+          <div class="form-group">
+            <label for="goalCurrentInput">Já Guardado (R$)</label>
+            <input type="number" id="goalCurrentInput" required step="1" min="0" value="0">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="goalEmojiInput">Ícone Emoji</label>
+          <input type="text" id="goalEmojiInput" value="🚀" maxlength="2">
+        </div>
+
+        <button type="submit" class="submit-tx-btn">CRIAR META</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: IMPORTAR EXTRATO PDF (novo; resto da interface preservado) -->
+  <div class="modal-overlay" id="statementImportModal" aria-hidden="true">
+    <div class="modal-card import-preview-card" role="dialog" aria-modal="true" aria-labelledby="statementImportTitle">
+      <div class="modal-header">
+        <h3 class="modal-title" id="statementImportTitle">IMPORTAR EXTRATO DO INTER</h3>
+        <button class="close-modal-btn" id="closeStatementImportBtn" type="button" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="statement-intro">Confira as movimentações detectadas. Possíveis duplicatas ficam desmarcadas. Nada será salvo até você confirmar.</div>
+      <div id="statementImportSummary" class="statement-summary"></div>
+      <div id="statementImportMessage" class="statement-message" role="status"></div>
+      <div class="statement-preview-wrap" id="statementImportPreview"></div>
+      <div class="statement-footer-actions">
+        <button class="btn-micro" id="cancelStatementImportBtn" type="button">CANCELAR</button>
+        <button class="cta-primary-btn" id="confirmStatementImportBtn" type="button" disabled>CONFIRMAR E IMPORTAR</button>
+      </div>
+      <p class="statement-privacy">O PDF é processado no navegador. Nunca informe sua senha bancária. Confira os valores e os tipos antes de importar.</p>
+    </div>
+  </div>
+
+  <!-- Audio Prompt Floating Toast -->
+  <div class="sound-toast" id="soundToast">
+    <span>🔊 Efeitos sonoros estéreos WebAudio ativados para feedback tátil!</span>
+  </div>
+
+  <!-- Script Execution -->
+  <script src="script.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,2469 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOBRA Quantum Finance</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PDF.js CDN for Client-side Extrato Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        quantum: {
+                            bg: '#080c14',
+                            card: '#0f172a',
+                            border: '#1e293b',
+                            cyan: '#00f2fe',
+                            blue: '#4facfe',
+                            emerald: '#00f5a0',
+                            crimson: '#ff4b2b',
+                            amber: '#f59e0b',
+                            purple: '#a855f7'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #080c14;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+        }
+
+        .glass-panel-glow {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            box-shadow: 0 0 25px -5px rgba(0, 242, 254, 0.15);
+        }
+
+        .glass-card-interactive {
+            transition: all 0.25s ease;
+        }
+        .glass-card-interactive:hover {
+            border-color: rgba(0, 242, 254, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 242, 254, 0.1);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #080c14;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f2fe;
+        }
+
+        /* Chart Animations */
+        .chart-path {
+            stroke-dasharray: 2000;
+            stroke-dashoffset: 2000;
+            animation: dash 1.5s ease-out forwards;
+        }
+        @keyframes dash {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .chart-point {
+            transition: r 0.2s ease, fill 0.2s ease;
+        }
+        .chart-point:hover {
+            r: 7;
+            cursor: pointer;
+        }
+
+        /* Hide Scrollbars in Navigation */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row antialiased selection:bg-cyan-500 selection:text-slate-900">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Desktop Sidebar Navigation -->
+    <aside class="hidden md:flex flex-col w-64 bg-slate-950/80 border-r border-slate-800/80 p-5 shrink-0 justify-between min-h-screen sticky top-0 backdrop-blur-md z-30">
+        <div>
+            <!-- App Brand Header -->
+            <div class="flex items-center gap-3 px-2 py-3 mb-8">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-outfit font-extrabold text-xl shadow-lg shadow-cyan-500/20">
+                    S
+                </div>
+                <div>
+                    <h1 class="font-outfit font-bold text-lg tracking-wide text-white leading-tight">SOBRA <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-sans font-medium">QUANTUM</span></h1>
+                    <p class="text-xs text-slate-400">Financeiro Pessoal</p>
+                </div>
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="space-y-1.5" id="sidebar-nav">
+                <button onclick="navTo('overview')" id="nav-btn-overview" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i> Visão Geral
+                </button>
+                <button onclick="navTo('transactions')" id="nav-btn-transactions" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-receipt w-5 text-center"></i> Movimentações
+                </button>
+                <button onclick="navTo('import')" id="nav-btn-import" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i> Importar Extrato
+                </button>
+                <button onclick="navTo('budget')" id="nav-btn-budget" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-bullseye w-5 text-center"></i> Orçamento
+                </button>
+                <button onclick="navTo('goals')" id="nav-btn-goals" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-trophy w-5 text-center"></i> Metas
+                </button>
+                <button onclick="navTo('investments')" id="nav-btn-investments" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-chart-line w-5 text-center"></i> Investimentos
+                </button>
+                <button onclick="navTo('reports')" id="nav-btn-reports" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-magnifying-glass-chart w-5 text-center"></i> Relatórios
+                </button>
+                <button onclick="navTo('settings')" id="nav-btn-settings" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all">
+                    <i class="fa-solid fa-sliders w-5 text-center"></i> Configurações
+                </button>
+            </nav>
+        </div>
+
+        <!-- Footer / Demo Indicator -->
+        <div class="pt-4 border-t border-slate-800/80">
+            <div id="demo-badge-sidebar" class="hidden mb-3 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 flex items-center justify-between">
+                <span><i class="fa-solid fa-vial mr-1.5"></i> Modo Demo Ativo</span>
+                <button onclick="resetToEmptyState()" class="hover:underline font-bold text-amber-200">Limpar</button>
+            </div>
+            <div class="text-xs text-slate-500 text-center">
+                <p class="font-mono">v2.0 Quantum · Client-side</p>
+                <p class="mt-1 text-[10px] text-slate-600">Dados protegidos no navegador</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Mobile Top Navigation Header -->
+    <header class="md:hidden flex items-center justify-between p-4 bg-slate-950/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-slate-950 font-outfit font-bold text-base">
+                S
+            </div>
+            <span class="font-outfit font-bold text-base tracking-wide text-white">SOBRA <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300">QUANTUM</span></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openTransactionModal()" class="px-3 py-1.5 rounded-lg bg-cyan-500 text-slate-950 font-semibold text-xs flex items-center gap-1">
+                <i class="fa-solid fa-plus"></i> Novo
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-4 md:p-8 max-w-7xl mx-auto w-full pb-24 md:pb-8 space-y-8">
+
+        <!-- Top Header Banner (Global Context & Cycle Selector) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800/60">
+            <div>
+                <h2 id="page-title" class="text-2xl md:text-3xl font-outfit font-bold text-white tracking-tight">Visão Geral</h2>
+                <p id="cycle-period-label" class="text-xs md:text-sm text-slate-400 mt-0.5 flex items-center gap-2">
+                    <i class="fa-regular fa-calendar text-cyan-400"></i> Ciclo Atual: <span id="cycle-dates-text" class="text-slate-200 font-medium">Carregando...</span>
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs">
+                    <button onclick="changeCycleOffset(-1)" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all" title="Ciclo Anterior">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button onclick="resetCycleOffset()" id="current-cycle-btn" class="px-3 py-1 font-medium text-cyan-400 hover:bg-slate-800 rounded-lg transition-all">
+                        Ciclo Atual
+                    </button>
+                    <button onclick="changeCycleOffset(1)" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all" title="Próximo Ciclo">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <button onclick="openTransactionModal()" class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/20 hover:brightness-110 transition-all">
+                    <i class="fa-solid fa-plus"></i> Novo Lançamento
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: VISÃO GERAL -->
+        <section id="section-overview" class="space-y-8">
+            
+            <!-- Quantum Hero Card: Quanto Posso Gastar Hoje? -->
+            <div class="glass-panel-glow p-6 md:p-8 rounded-2xl relative overflow-hidden">
+                <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-2xl">
+                        <div class="flex items-center gap-2 text-xs font-semibold tracking-wider text-cyan-400 uppercase">
+                            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                            Algoritmo de Teto Diário Seguro
+                        </div>
+                        <h3 class="text-3xl md:text-5xl font-outfit font-extrabold text-white tracking-tight" id="daily-spend-allowance">
+                            R$ 0,00
+                        </h3>
+                        <p class="text-sm text-slate-300 leading-relaxed" id="daily-spend-explanation">
+                            Valor seguro estimado para gastar hoje até o fim do ciclo sem comprometer seu saldo previsto.
+                        </p>
+                    </div>
+
+                    <!-- Cycle Days Remaining Control Card -->
+                    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 min-w-[280px] space-y-3">
+                        <div class="flex justify-between text-xs text-slate-400">
+                            <span>Dias restantes no ciclo:</span>
+                            <span class="font-bold text-cyan-400" id="days-remaining-count">0 dias</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div id="cycle-progress-bar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full" style="width: 50%"></div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-500">
+                            <span id="cycle-start-label">Dia 05</span>
+                            <span id="cycle-end-label">Dia 04</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial KPI Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <!-- Saldo Caixa -->
+                <div class="glass-panel p-4 rounded-xl border border-slate-800/80">
+                    <p class="text-xs text-slate-400 font-medium">Saldo em Caixa</p>
+                    <p class="text-xl md:text-2xl font-outfit font-bold text-white mt-1" id="kpi-cash-balance">R$ 0,00</p>
+                    <p class="text-[11px] text-slate-500 mt-1" id="kpi-cash-sub">Receitas/resgates − despesas/aplicações</p>
+                </div>
+
+                <!-- Receitas Ciclo -->
+                <div class="glass-panel p-4 rounded-xl border border-slate-800/80">
+                    <p class="text-xs text-slate-400 font-medium">Receitas no Ciclo</p>
+                    <p class="text-xl md:text-2xl font-outfit font-bold text-emerald-400 mt-1" id="kpi-cycle-income">R$ 0,00</p>
+                    <p class="text-[11px] text-emerald-500/80 mt-1"><i class="fa-solid fa-arrow-up text-[9px]"></i> Entradas de consumo</p>
+                </div>
+
+                <!-- Despesas Ciclo -->
+                <div class="glass-panel p-4 rounded-xl border border-slate-800/80">
+                    <p class="text-xs text-slate-400 font-medium">Despesas no Ciclo</p>
+                    <p class="text-xl md:text-2xl font-outfit font-bold text-rose-400 mt-1" id="kpi-cycle-expense">R$ 0,00</p>
+                    <p class="text-[11px] text-rose-500/80 mt-1"><i class="fa-solid fa-arrow-down text-[9px]"></i> Saídas de consumo</p>
+                </div>
+
+                <!-- Total Investido -->
+                <div class="glass-panel p-4 rounded-xl border border-slate-800/80">
+                    <p class="text-xs text-slate-400 font-medium">Patrimônio Investido</p>
+                    <p class="text-xl md:text-2xl font-outfit font-bold text-purple-400 mt-1" id="kpi-total-invested">R$ 0,00</p>
+                    <p class="text-[11px] text-purple-400/80 mt-1">Aplicações − Resgates</p>
+                </div>
+
+                <!-- Taxa de Poupança -->
+                <div class="glass-panel p-4 rounded-xl border border-slate-800/80 col-span-2 sm:col-span-1">
+                    <p class="text-xs text-slate-400 font-medium">Taxa de Poupança</p>
+                    <p class="text-xl md:text-2xl font-outfit font-bold text-cyan-400 mt-1" id="kpi-savings-rate">0,0%</p>
+                    <p class="text-[11px] text-cyan-500/80 mt-1" id="kpi-savings-sub">Sobrou vs Receitas</p>
+                </div>
+            </div>
+
+            <!-- Visual Charts Row 1: Fluxo Diário + Categorias Donut -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Chart: Fluxo Diário do Ciclo (2/3 width) -->
+                <div class="glass-panel p-5 rounded-2xl lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-outfit font-bold text-slate-100 text-lg">Fluxo Diário do Ciclo</h4>
+                            <p class="text-xs text-slate-400">Entradas e saídas acumuladas por dia (clique nos pontos para filtrar)</p>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs">
+                            <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Receitas</span>
+                            <span class="flex items-center gap-1.5 text-rose-400"><span class="w-2.5 h-2.5 rounded-full bg-rose-400 inline-block"></span> Despesas</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-64 relative" id="daily-flow-chart-container">
+                        <!-- Rendered dynamically by SVG -->
+                    </div>
+                </div>
+
+                <!-- Chart: Categorias (1/3 width) -->
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 class="font-outfit font-bold text-slate-100 text-lg">Despesas por Categoria</h4>
+                            <p class="text-xs text-slate-400">Distribuição no ciclo atual</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-52 flex items-center justify-center relative" id="category-donut-container">
+                        <!-- SVG Donut Chart dynamically rendered -->
+                    </div>
+
+                    <div id="category-legend-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1 text-xs">
+                        <!-- Category items rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cycle Calendar Grid View -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-outfit font-bold text-slate-100 text-lg">Calendário do Ciclo Operacional</h4>
+                        <p class="text-xs text-slate-400">Mapeamento diário de movimentações. Clique no dia para ver os lançamentos.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold text-slate-500 mb-1">
+                    <span>DOM</span><span>SEG</span><span>TER</span><span>QUA</span><span>QUI</span><span>SEX</span><span>SÁB</span>
+                </div>
+                <div class="grid grid-cols-7 gap-1.5" id="cycle-calendar-grid">
+                    <!-- Dynamic Calendar Tiles -->
+                </div>
+            </div>
+
+            <!-- Row 3: 6-Month Comparison + Category Budget Quick Bars -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- 6 Month Trend Bar Chart -->
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <h4 class="font-outfit font-bold text-slate-100 text-lg">Evolução de Ciclos (Últimos 6)</h4>
+                    <div class="w-full h-56 relative" id="six-month-bar-chart">
+                        <!-- Dynamic SVG Bar Chart -->
+                    </div>
+                </div>
+
+                <!-- Budget Bars Summary -->
+                <div class="glass-panel p-5 rounded-2xl space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h4 class="font-outfit font-bold text-slate-100 text-lg">Resumo do Orçamento por Categoria</h4>
+                        <button onclick="navTo('budget')" class="text-xs text-cyan-400 hover:underline">Gerenciar Limites</button>
+                    </div>
+                    <div class="space-y-3 max-h-56 overflow-y-auto pr-1" id="overview-budget-bars">
+                        <!-- Dynamic Budget Bars -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Table Preview -->
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="font-outfit font-bold text-slate-100 text-lg">Movimentações Recentes</h4>
+                        <p class="text-xs text-slate-400">Últimos lançamentos registrados</p>
+                    </div>
+                    <button onclick="navTo('transactions')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-cyan-400 font-medium">
+                        Ver Todas <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Descrição</th>
+                                <th class="p-3">Tipo</th>
+                                <th class="p-3">Categoria</th>
+                                <th class="p-3 text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="overview-recent-transactions-list" class="divide-y divide-slate-800/60">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SECTION 2: MOVIMENTAÇÕES -->
+        <section id="section-transactions" class="space-y-6 hidden">
+            <div class="glass-panel p-5 rounded-2xl space-y-4">
+                <!-- Filters Bar -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                        <label class="text-[11px] text-slate-400 font-medium block mb-1">Buscar por texto</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                            <input type="text" id="tx-search-input" onkeyup="renderTransactionsTable()" placeholder="Descrição..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] text-slate-400 font-medium block mb-1">Tipo de Lançamento</label>
+                        <select id="tx-filter-type" onchange="renderTransactionsTable()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <option value="ALL">Todos os Tipos</option>
+                            <option value="income">Receita (+caixa)</option>
+                            <option value="expense">Despesa (-caixa)</option>
+                            <option value="investment">Aplicação (-caixa, +inv)</option>
+                            <option value="redemption">Resgate (+caixa, -inv)</option>
+                            <option value="transfer">Transferência (Neutro)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] text-slate-400 font-medium block mb-1">Categoria</label>
+                        <select id="tx-filter-category" onchange="renderTransactionsTable()" class="w-full px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <option value="ALL">Todas as Categorias</option>
+                            <!-- Dynamic options -->
+                        </select>
+                    </div>
+
+                    <div class="flex items-end gap-2">
+                        <button onclick="clearTransactionFilters()" class="w-full px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium">
+                            Limpar Filtros
+                        </button>
+                        <button onclick="exportTransactionsCSV()" class="px-3 py-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 rounded-xl text-xs font-semibold shrink-0" title="Exportar CSV">
+                            <i class="fa-solid fa-file-csv"></i> CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-800">
+                            <tr>
+                                <th class="p-3">Data</th>
+                                <th class="p-3">Descrição</th>
+                                <th class="p-3">Tipo</th>
+                                <th class="p-3">Categoria</th>
+                                <th class="p-3 text-right">Valor</th>
+                                <th class="p-3 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="full-transactions-list" class="divide-y divide-slate-800/60">
+                            <!-- Rendered dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State Message -->
+                <div id="tx-empty-state" class="hidden py-12 text-center text-slate-500 space-y-3">
+                    <i class="fa-solid fa-receipt text-4xl text-slate-700"></i>
+                    <p class="text-sm">Nenhuma movimentação encontrada para o filtro selecionado.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: IMPORTAR EXTRATO -->
+        <section id="section-import" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl space-y-6">
+                <div>
+                    <h3 class="text-xl font-outfit font-bold text-white">Importador Inteligente de Extrato</h3>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Suporta PDFs do Banco Inter/padrão, arquivos CSV e OFX. Seus dados continuam no seu navegador.
+                    </p>
+                </div>
+
+                <!-- Dropzone Area -->
+                <div id="dropzone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500/60 bg-slate-900/40 rounded-2xl p-8 text-center transition-all cursor-pointer">
+                    <input type="file" id="extrato-file-input" accept=".pdf,.csv,.ofx" class="hidden" onchange="handleFileSelect(event)">
+                    <div class="space-y-3 pointer-events-none">
+                        <div class="w-12 h-12 rounded-full bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center mx-auto text-cyan-400 text-xl">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-200">Arraste seu arquivo de extrato aqui ou clique para selecionar</p>
+                            <p class="text-xs text-slate-500 mt-1">Arquivos suportados: PDF (Inter), CSV, OFX</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Paste Text Fallback -->
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400 font-semibold flex items-center justify-between">
+                        <span>Ou cole o texto do extrato/CSV manualmente:</span>
+                        <button onclick="processPastedText()" class="text-cyan-400 hover:underline text-[11px]">Processar Texto Colado</button>
+                    </label>
+                    <textarea id="paste-extrato-text" rows="3" placeholder="Exemplo: 12/10/2026 - Pix enviado para Mercado - R$ 45,90..." class="w-full p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"></textarea>
+                </div>
+
+                <!-- Import Preview Table Container -->
+                <div id="import-preview-container" class="hidden space-y-4 pt-4 border-t border-slate-800">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h4 class="font-outfit font-bold text-white text-base flex items-center gap-2">
+                                Prévia de Importação
+                                <span id="import-count-badge" class="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-sans">0 itens</span>
+                            </h4>
+                            <p class="text-xs text-slate-400">Revise os itens e ajuste os tipos e categorias antes de confirmar.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="cancelImportPreview()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium">
+                                Cancelar
+                            </button>
+                            <button onclick="confirmAndSaveImport()" class="px-4 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-lg shadow-cyan-500/20">
+                                <i class="fa-solid fa-check mr-1"></i> Confirmar e Salvar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="duplicate-warning-banner" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-400 text-sm"></i>
+                        <span>Possíveis duplicatas foram detectadas e desmarcadas por padrão. Por favor, revise a lista.</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-300">
+                            <thead class="bg-slate-900/80 text-slate-400 uppercase text-[10px] font-semibold border-b border-slate-800">
+                                <tr>
+                                    <th class="p-3 text-center">Incluir</th>
+                                    <th class="p-3">Data</th>
+                                    <th class="p-3">Descrição Normalizada</th>
+                                    <th class="p-3">Tipo Sugerido</th>
+                                    <th class="p-3">Categoria Sugerida</th>
+                                    <th class="p-3 text-right">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="import-preview-list" class="divide-y divide-slate-800/60">
+                                <!-- Preview Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: ORÇAMENTO -->
+        <section id="section-budget" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-outfit font-bold text-white">Gestão de Orçamentos por Categoria</h3>
+                        <p class="text-xs text-slate-400 mt-1">Defina metas de consumo para não ultrapassar seus limites no ciclo.</p>
+                    </div>
+                    <button onclick="openBudgetModal()" class="px-4 py-2 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 rounded-xl text-xs font-semibold">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i> Editar Limites
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="budget-cards-grid">
+                    <!-- Dynamic Budget Progress Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: METAS -->
+        <section id="section-goals" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-outfit font-bold text-white">Objetivos e Metas Financeiras</h3>
+                        <p class="text-xs text-slate-400 mt-1">Acompanhe a evolução para grandes conquistas e fundos de reserva.</p>
+                    </div>
+                    <button onclick="openGoalModal()" class="px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold rounded-xl text-xs shadow-lg shadow-cyan-500/20">
+                        <i class="fa-solid fa-plus mr-1"></i> Nova Meta
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="goals-cards-grid">
+                    <!-- Dynamic Goal Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: INVESTIMENTOS & SIMULADOR QUANTUM -->
+        <section id="section-investments" class="space-y-8 hidden">
+            
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                    <p class="text-xs text-slate-400 font-medium">Patrimônio Investido</p>
+                    <p class="text-2xl font-outfit font-bold text-purple-400 mt-1" id="inv-total-allocated">R$ 0,00</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Aplicações acumuladas ativas</p>
+                </div>
+
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                    <p class="text-xs text-slate-400 font-medium">Total de Aplicações</p>
+                    <p class="text-2xl font-outfit font-bold text-emerald-400 mt-1" id="inv-total-deposits">R$ 0,00</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Saídas de caixa destinadas a ativos</p>
+                </div>
+
+                <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+                    <p class="text-xs text-slate-400 font-medium">Total de Resgates</p>
+                    <p class="text-2xl font-outfit font-bold text-cyan-400 mt-1" id="inv-total-withdrawals">R$ 0,00</p>
+                    <p class="text-[11px] text-slate-500 mt-1">Entradas de caixa por liquidação</p>
+                </div>
+            </div>
+
+            <!-- Compound Interest Simulator -->
+            <div class="glass-panel p-6 rounded-2xl space-y-6">
+                <div>
+                    <h3 class="text-xl font-outfit font-bold text-white flex items-center gap-2">
+                        Simulador Quantum de Juros Compostos
+                        <span class="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 font-sans">Projeção Hipotética</span>
+                    </h3>
+                    <p class="text-xs text-slate-400 mt-1">Explore a força dos aportes recorrentes em 3 cenários de rentabilidade.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Aporte Inicial (R$)</label>
+                        <input type="number" id="sim-initial" value="5000" min="0" step="500" onchange="runInvestmentSimulation()" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Aporte Mensal (R$)</label>
+                        <input type="number" id="sim-monthly" value="500" min="0" step="50" onchange="runInvestmentSimulation()" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Prazo (Anos)</label>
+                        <input type="number" id="sim-years" value="10" min="1" max="30" onchange="runInvestmentSimulation()" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Taxa Anual Base (%)</label>
+                        <input type="number" id="sim-rate" value="10.5" step="0.5" onchange="runInvestmentSimulation()" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <!-- Simulation SVG Chart -->
+                <div class="w-full h-64 relative" id="simulation-chart-container">
+                    <!-- SVG lines rendered dynamically -->
+                </div>
+
+                <!-- Scenario Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="sim-scenario-cards">
+                    <!-- Dynamic Scenario Cards -->
+                </div>
+
+                <!-- Legal Disclaimer -->
+                <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+                    <i class="fa-solid fa-circle-info text-cyan-400 mr-1"></i>
+                    <strong>Aviso de Educação Financeira:</strong> Esta simulação possui caráter estritamente educativo e hipotético. Os cálculos não consideram alíquotas de impostos (ex: Imposto de Renda), taxas de administração, inflação do período ou riscos de liquidez e mercado. Não constitui recomendação nem promessa de rentabilidade.
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7: RELATÓRIOS -->
+        <section id="section-reports" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl space-y-6">
+                <div>
+                    <h3 class="text-xl font-outfit font-bold text-white">Análise Inteligente e Diagnóstico</h3>
+                    <p class="text-xs text-slate-400 mt-1">Insights sintetizados a partir das suas movimentações financeiras.</p>
+                </div>
+
+                <div class="p-5 rounded-xl bg-gradient-to-r from-cyan-950/40 to-slate-900 border border-cyan-500/20 space-y-3">
+                    <h4 class="text-sm font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Análise de Inteligência SOBRA
+                    </h4>
+                    <p class="text-xs text-slate-200 leading-relaxed" id="smart-analysis-text">
+                        Carregando análise...
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        <h4 class="font-outfit font-bold text-slate-200 text-sm">Maiores Válvulas de Despesa</h4>
+                        <div class="space-y-2" id="reports-top-expenses">
+                            <!-- Dynamic list -->
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="font-outfit font-bold text-slate-200 text-sm">Resumo do Ciclo Selecionado</h4>
+                        <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2 text-xs">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Total de Entradas:</span>
+                                <span class="text-emerald-400 font-bold" id="rep-income">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Total de Saídas:</span>
+                                <span class="text-rose-400 font-bold" id="rep-expense">R$ 0,00</span>
+                            </div>
+                            <div class="flex justify-between text-slate-400 border-t border-slate-800 pt-2 font-semibold">
+                                <span>Resultado Líquido do Ciclo:</span>
+                                <span class="text-cyan-400 font-bold" id="rep-net">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 8: CONFIGURAÇÕES -->
+        <section id="section-settings" class="space-y-6 hidden">
+            <div class="glass-panel p-6 rounded-2xl space-y-6 max-w-3xl">
+                <h3 class="text-xl font-outfit font-bold text-white">Configurações do Sistema</h3>
+
+                <!-- Cycle & Income Config -->
+                <div class="space-y-4 border-b border-slate-800 pb-6">
+                    <h4 class="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Parâmetros Operacionais</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs text-slate-400 font-medium block mb-1">Dia de Virada do Ciclo</label>
+                            <input type="number" id="setting-cycle-day" min="1" max="28" value="5" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <p class="text-[11px] text-slate-500 mt-1">Exemplo: Dia 5 significa ciclo do dia 5 até dia 4 do mês seguinte.</p>
+                        </div>
+
+                        <div>
+                            <label class="text-xs text-slate-400 font-medium block mb-1">Salário Recorrente Previsto (R$)</label>
+                            <input type="number" id="setting-expected-salary" value="5000" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <p class="text-[11px] text-slate-500 mt-1">Usado apenas para projeções estimadas.</p>
+                        </div>
+
+                        <div class="sm:col-span-2">
+                            <label class="text-xs text-slate-400 font-medium block mb-1">Saldo Inicial Manual de Caixa (R$)</label>
+                            <input type="number" id="setting-initial-cash" value="0" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <p class="text-[11px] text-slate-500 mt-1">Saldo acumulado anterior ao primeiro ciclo cadastrado no app.</p>
+                        </div>
+                    </div>
+
+                    <button onclick="saveSettingsParameters()" class="px-4 py-2 bg-cyan-500 text-slate-950 font-bold rounded-xl text-xs">
+                        Salvar Parâmetros
+                    </button>
+                </div>
+
+                <!-- Backup & Reset Controls -->
+                <div class="space-y-4 border-b border-slate-800 pb-6">
+                    <h4 class="text-sm font-semibold text-cyan-400 uppercase tracking-wider">Gestão de Dados</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="exportJSONBackup()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-download"></i> Baixar Backup (JSON)
+                        </button>
+
+                        <label class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl text-xs cursor-pointer flex items-center gap-2">
+                            <i class="fa-solid fa-upload"></i> Restaurar Backup (JSON)
+                            <input type="file" id="import-json-file" accept=".json" class="hidden" onchange="importJSONBackup(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Demo Data & Danger Zone -->
+                <div class="space-y-4">
+                    <h4 class="text-sm font-semibold text-rose-400 uppercase tracking-wider">Testes e Zona Vermelha</h4>
+                    
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="loadDemoData()" class="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-semibold rounded-xl text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-vial"></i> Carregar Dados de Demonstração
+                        </button>
+
+                        <button onclick="confirmResetAllData()" class="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border border-rose-500/30 font-semibold rounded-xl text-xs flex items-center gap-2">
+                            <i class="fa-solid fa-trash-can"></i> Apagar Todos os Dados
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Mobile Sticky Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-slate-950/95 border-t border-slate-800/80 backdrop-blur-lg z-40 px-2 py-2 flex items-center justify-around text-[10px] text-slate-400">
+        <button onclick="navTo('overview')" id="mobile-nav-overview" class="flex flex-col items-center gap-1 text-cyan-400">
+            <i class="fa-solid fa-chart-pie text-sm"></i> Visão
+        </button>
+        <button onclick="navTo('transactions')" id="mobile-nav-transactions" class="flex flex-col items-center gap-1 hover:text-white">
+            <i class="fa-solid fa-receipt text-sm"></i> Extrato
+        </button>
+        <button onclick="navTo('import')" id="mobile-nav-import" class="flex flex-col items-center gap-1 hover:text-white">
+            <i class="fa-solid fa-file-invoice-dollar text-sm"></i> Importar
+        </button>
+        <button onclick="navTo('budget')" id="mobile-nav-budget" class="flex flex-col items-center gap-1 hover:text-white">
+            <i class="fa-solid fa-bullseye text-sm"></i> Metas
+        </button>
+        <button onclick="navTo('investments')" id="mobile-nav-investments" class="flex flex-col items-center gap-1 hover:text-white">
+            <i class="fa-solid fa-chart-line text-sm"></i> Investir
+        </button>
+    </nav>
+
+    <!-- MODAL 1: ADD/EDIT TRANSACTION -->
+    <div id="modal-transaction" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-md border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-outfit font-bold text-white" id="modal-tx-title">Novo Lançamento</h3>
+                <button onclick="closeTransactionModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="tx-form" onsubmit="handleTransactionSubmit(event)" class="space-y-3">
+                <input type="hidden" id="tx-edit-id">
+
+                <div>
+                    <label class="text-xs text-slate-400 font-medium block mb-1">Descrição</label>
+                    <input type="text" id="tx-input-desc" required placeholder="Ex: Supermercado, Salário, CDB Inter" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Valor (R$)</label>
+                        <input type="number" id="tx-input-amount" step="0.01" min="0.01" required placeholder="0,00" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Data</label>
+                        <input type="date" id="tx-input-date" required class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Tipo</label>
+                        <select id="tx-input-type" onchange="updateCategoryOptionsByTxType()" required class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <option value="expense">Despesa (Saída)</option>
+                            <option value="income">Receita (Entrada)</option>
+                            <option value="investment">Aplicação (Investir)</option>
+                            <option value="redemption">Resgate (Liquidar)</option>
+                            <option value="transfer">Transferência Neutra</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Categoria</label>
+                        <select id="tx-input-category" required class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                            <!-- Dynamic Options -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeTransactionModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-bold shadow-lg shadow-cyan-500/20">
+                        Salvar Lançamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EDIT BUDGET LIMITS -->
+    <div id="modal-budget" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-lg border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-outfit font-bold text-white">Editar Limites de Orçamento</h3>
+                <button onclick="closeBudgetModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="space-y-3 max-h-96 overflow-y-auto pr-1" id="budget-edit-list">
+                <!-- Inputs rendered dynamically -->
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <button onclick="closeBudgetModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-medium">
+                    Cancelar
+                </button>
+                <button onclick="saveBudgetLimits()" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-bold">
+                    Salvar Orçamentos
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADD/EDIT GOAL -->
+    <div id="modal-goal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass-panel p-6 rounded-2xl w-full max-w-md border border-slate-800 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-outfit font-bold text-white">Nova Meta Financeira</h3>
+                <button onclick="closeGoalModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <form id="goal-form" onsubmit="handleGoalSubmit(event)" class="space-y-3">
+                <div>
+                    <label class="text-xs text-slate-400 font-medium block mb-1">Título da Meta</label>
+                    <input type="text" id="goal-input-title" required placeholder="Ex: Reserva de Emergência, Viagem" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Valor Alvo (R$)</label>
+                        <input type="number" id="goal-input-target" step="100" min="1" required placeholder="10000" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-slate-400 font-medium block mb-1">Já Guardado (R$)</label>
+                        <input type="number" id="goal-input-saved" step="50" min="0" value="0" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs text-slate-400 font-medium block mb-1">Data Prevista (Opcional)</label>
+                    <input type="date" id="goal-input-deadline" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeGoalModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-medium">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 rounded-xl text-xs font-bold">
+                        Salvar Meta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        /**
+         * SOBRA QUANTUM FINANCE - Core Logic
+         * Client-Side Standard Javascript & Local Storage Engine
+         */
+
+        const STORAGE_KEY = 'sobra_quantum_v2';
+
+        // Predefined Standard Categories & Colors
+        const CATEGORIES = {
+            'Alimentação': { color: '#00f2fe', icon: 'fa-utensils' },
+            'Moradia': { color: '#4facfe', icon: 'fa-house' },
+            'Transporte': { color: '#00f5a0', icon: 'fa-car' },
+            'Lazer': { color: '#a855f7', icon: 'fa-gamepad' },
+            'Saúde': { color: '#ff4b2b', icon: 'fa-heart-pulse' },
+            'Salário': { color: '#10b981', icon: 'fa-money-bill-wave' },
+            'Investimentos': { color: '#8b5cf6', icon: 'fa-chart-line' },
+            'Outros': { color: '#64748b', icon: 'fa-tag' }
+        };
+
+        // Default State Configuration
+        let appState = {
+            settings: {
+                cycleStartDay: 5,
+                expectedSalary: 5000,
+                initialCash: 0,
+                isDemo: false
+            },
+            transactions: [],
+            budgets: {
+                'Alimentação': 1200,
+                'Moradia': 2000,
+                'Transporte': 600,
+                'Lazer': 500,
+                'Saúde': 400,
+                'Outros': 300
+            },
+            goals: []
+        };
+
+        // Active Navigation & Cycle View State
+        let currentSection = 'overview';
+        let activeCycleOffset = 0; // 0 = current cycle, -1 = previous, +1 = next
+        let pendingImportItems = [];
+
+        // --- APP INITIALIZATION ---
+        window.onload = function() {
+            // Configure PDF.js worker
+            if (typeof pdfjsLib !== 'undefined') {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            }
+
+            loadFromLocalStorage();
+            populateCategoryDropdowns();
+            renderAppView();
+
+            // Set default date picker to today
+            document.getElementById('tx-input-date').value = getTodayISODate();
+        };
+
+        // Local Storage Persistence
+        function saveToLocalStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        }
+
+        function loadFromLocalStorage() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    appState = { ...appState, ...parsed };
+                } catch(e) {
+                    console.error("Erro ao carregar dados locais:", e);
+                }
+            }
+        }
+
+        // --- UI NAVIGATION LOGIC ---
+        function navTo(sectionId) {
+            currentSection = sectionId;
+            
+            // Hide all sections
+            const sections = ['overview', 'transactions', 'import', 'budget', 'goals', 'investments', 'reports', 'settings'];
+            sections.forEach(s => {
+                const el = document.getElementById(`section-${s}`);
+                if (el) el.classList.add('hidden');
+            });
+
+            // Show selected section
+            const activeEl = document.getElementById(`section-${sectionId}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+
+            // Update Desktop Nav styles
+            sections.forEach(s => {
+                const btn = document.getElementById(`nav-btn-${s}`);
+                if (btn) {
+                    if (s === sectionId) {
+                        btn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-cyan-400 bg-cyan-500/10 border border-cyan-500/20";
+                    } else {
+                        btn.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 transition-all";
+                    }
+                }
+            });
+
+            // Update Mobile Nav styles
+            sections.forEach(s => {
+                const mobBtn = document.getElementById(`mobile-nav-${s}`);
+                if (mobBtn) {
+                    if (s === sectionId) mobBtn.className = "flex flex-col items-center gap-1 text-cyan-400";
+                    else mobBtn.className = "flex flex-col items-center gap-1 hover:text-white text-slate-400";
+                }
+            });
+
+            // Update Section Header Title
+            const titles = {
+                'overview': 'Visão Geral',
+                'transactions': 'Movimentações',
+                'import': 'Importar Extrato',
+                'budget': 'Orçamento por Categoria',
+                'goals': 'Metas Financeiras',
+                'investments': 'Investimentos & Simulador',
+                'reports': 'Relatórios & Inteligência',
+                'settings': 'Configurações do Sistema'
+            };
+            document.getElementById('page-title').innerText = titles[sectionId] || 'Visão Geral';
+
+            // Re-render specific view
+            renderAppView();
+        }
+
+        // --- CYCLE CALCULATION HELPERS ---
+        function getCycleBounds(offset = 0) {
+            const now = new Date();
+            let targetMonth = now.getMonth() + offset;
+            let targetYear = now.getFullYear();
+
+            // Adjust year wrap
+            const dateObj = new Date(targetYear, targetMonth, 1);
+            targetMonth = dateObj.getMonth();
+            targetYear = dateObj.getFullYear();
+
+            const cycleStartDay = parseInt(appState.settings.cycleStartDay) || 5;
+
+            // Start Date: cycleStartDay of target month
+            let startDate = new Date(targetYear, targetMonth, cycleStartDay);
+            if (now.getDate() < cycleStartDay && offset === 0) {
+                // If today is before cycleStartDay, current cycle started last month
+                startDate = new Date(targetYear, targetMonth - 1, cycleStartDay);
+            }
+
+            // End Date: day before cycleStartDay of next month
+            let endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, cycleStartDay - 1);
+
+            return { startDate, endDate };
+        }
+
+        function changeCycleOffset(delta) {
+            activeCycleOffset += delta;
+            renderAppView();
+        }
+
+        function resetCycleOffset() {
+            activeCycleOffset = 0;
+            renderAppView();
+        }
+
+        // --- CORE CALCULATIONS & RENDER ENGINE ---
+        function renderAppView() {
+            const { startDate, endDate } = getCycleBounds(activeCycleOffset);
+
+            // Format Cycle Header Text
+            const startStr = formatDateBR(startDate);
+            const endStr = formatDateBR(endDate);
+            document.getElementById('cycle-dates-text').innerText = `${startStr} até ${endStr}`;
+            document.getElementById('current-cycle-btn').innerText = activeCycleOffset === 0 ? "Ciclo Atual" : `Ciclo (${activeCycleOffset > 0 ? '+' : ''}${activeCycleOffset})`;
+
+            // Demo Badge Visibility
+            const demoBadge = document.getElementById('demo-badge-sidebar');
+            if (appState.settings.isDemo) demoBadge.classList.remove('hidden');
+            else demoBadge.classList.add('hidden');
+
+            // Render active view tab
+            if (currentSection === 'overview') renderOverviewTab(startDate, endDate);
+            else if (currentSection === 'transactions') renderTransactionsTable();
+            else if (currentSection === 'budget') renderBudgetSection(startDate, endDate);
+            else if (currentSection === 'goals') renderGoalsSection();
+            else if (currentSection === 'investments') renderInvestmentsSection();
+            else if (currentSection === 'reports') renderReportsSection(startDate, endDate);
+            else if (currentSection === 'settings') populateSettingsInputs();
+        }
+
+        function renderOverviewTab(startDate, endDate) {
+            // Filter cycle transactions
+            const cycleTxs = appState.transactions.filter(t => {
+                const d = new Date(t.date + 'T00:00:00');
+                return d >= startDate && d <= endDate;
+            });
+
+            // Calculate Consolidated Balances
+            let totalIncomeAll = 0, totalExpenseAll = 0, totalInvAll = 0, totalRedempAll = 0;
+            appState.transactions.forEach(t => {
+                const amt = parseFloat(t.amount);
+                if (t.type === 'income') totalIncomeAll += amt;
+                if (t.type === 'expense') totalExpenseAll += amt;
+                if (t.type === 'investment') totalInvAll += amt;
+                if (t.type === 'redemption') totalRedempAll += amt;
+            });
+
+            const initialCash = parseFloat(appState.settings.initialCash) || 0;
+            const currentCashBalance = initialCash + totalIncomeAll + totalRedempAll - totalExpenseAll - totalInvAll;
+            const netInvested = totalInvAll - totalRedempAll;
+
+            // Cycle Specific Metrics
+            let cycleIncome = 0, cycleExpense = 0;
+            cycleTxs.forEach(t => {
+                const amt = parseFloat(t.amount);
+                if (t.type === 'income') cycleIncome += amt;
+                if (t.type === 'expense') cycleExpense += amt;
+            });
+
+            const cycleNet = cycleIncome - cycleExpense;
+            const savingsRate = cycleIncome > 0 ? Math.max(0, (cycleNet / cycleIncome) * 100) : 0;
+
+            // Render KPIs
+            document.getElementById('kpi-cash-balance').innerText = formatBRL(currentCashBalance);
+            document.getElementById('kpi-cycle-income').innerText = formatBRL(cycleIncome);
+            document.getElementById('kpi-cycle-expense').innerText = formatBRL(cycleExpense);
+            document.getElementById('kpi-total-invested').innerText = formatBRL(netInvested);
+            document.getElementById('kpi-savings-rate').innerText = `${savingsRate.toFixed(1)}%`;
+
+            // Daily Safe Spend Calculation ("Quanto Posso Gastar Hoje?")
+            const today = new Date();
+            let daysRemaining = Math.ceil((endDate - today) / (1000 * 60 * 60 * 24));
+            if (daysRemaining < 1) daysRemaining = 1;
+
+            const totalDaysInCycle = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+            const cycleProgressPct = Math.min(100, Math.max(0, ((totalDaysInCycle - daysRemaining) / totalDaysInCycle) * 100));
+
+            document.getElementById('days-remaining-count').innerText = `${daysRemaining} dia${daysRemaining > 1 ? 's' : ''}`;
+            document.getElementById('cycle-progress-bar').style.width = `${cycleProgressPct}%`;
+            document.getElementById('cycle-start-label').innerText = `Dia ${startDate.getDate()}`;
+            document.getElementById('cycle-end-label').innerText = `Dia ${endDate.getDate()}`;
+
+            // Formula: Available Cash / Days Remaining
+            const safeDailySpend = Math.max(0, currentCashBalance / daysRemaining);
+            document.getElementById('daily-spend-allowance').innerText = formatBRL(safeDailySpend);
+
+            // Render Charts & Grids
+            renderDailyFlowChart(cycleTxs, startDate, endDate);
+            renderCategoryDonutChart(cycleTxs);
+            renderCycleCalendarGrid(cycleTxs, startDate, endDate);
+            renderSixMonthTrendChart();
+            renderOverviewBudgetBars(cycleTxs);
+            renderRecentTransactionsOverview(cycleTxs);
+        }
+
+        // --- SVG CHARTS GENERATION (LIGHTWEIGHT & STANDALONE) ---
+        function renderDailyFlowChart(cycleTxs, startDate, endDate) {
+            const container = document.getElementById('daily-flow-chart-container');
+            container.innerHTML = '';
+
+            const datesMap = {};
+            let curr = new Date(startDate);
+            while (curr <= endDate) {
+                const key = curr.toISOString().split('T')[0];
+                datesMap[key] = { income: 0, expense: 0, date: new Date(curr) };
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            cycleTxs.forEach(t => {
+                if (datesMap[t.date]) {
+                    if (t.type === 'income') datesMap[t.date].income += parseFloat(t.amount);
+                    if (t.type === 'expense') datesMap[t.date].expense += parseFloat(t.amount);
+                }
+            });
+
+            const keys = Object.keys(datesMap);
+            if (keys.length === 0) return;
+
+            const width = container.clientWidth || 600;
+            const height = container.clientHeight || 240;
+            const padding = 30;
+
+            let maxVal = 100;
+            keys.forEach(k => {
+                maxVal = Math.max(maxVal, datesMap[k].income, datesMap[k].expense);
+            });
+
+            let svg = `<svg width="${width}" height="${height}" class="w-full h-full">`;
+
+            // Draw Y Grid lines
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (height - 2 * padding) * (i / 4);
+                svg += `<line x1="${padding}" y1="${y}" x2="${width - padding}" y2="${y}" stroke="#1e293b" stroke-dasharray="4"/>`;
+            }
+
+            // Income and Expense Points
+            let incPoints = [], expPoints = [];
+            keys.forEach((key, idx) => {
+                const x = padding + (width - 2 * padding) * (idx / (keys.length - 1 || 1));
+                const yInc = height - padding - ((datesMap[key].income / maxVal) * (height - 2 * padding));
+                const yExp = height - padding - ((datesMap[key].expense / maxVal) * (height - 2 * padding));
+                incPoints.push({ x, y: yInc, val: datesMap[key].income, date: key });
+                expPoints.push({ x, y: yExp, val: datesMap[key].expense, date: key });
+            });
+
+            // Draw Lines
+            let incPath = `M ${incPoints[0].x} ${incPoints[0].y} ` + incPoints.map(p => `L ${p.x} ${p.y}`).join(' ');
+            let expPath = `M ${expPoints[0].x} ${expPoints[0].y} ` + expPoints.map(p => `L ${p.x} ${p.y}`).join(' ');
+
+            svg += `<path d="${incPath}" fill="none" stroke="#00f5a0" stroke-width="2.5" class="chart-path"/>`;
+            svg += `<path d="${expPath}" fill="none" stroke="#ff4b2b" stroke-width="2.5" class="chart-path"/>`;
+
+            // Interactive Circles
+            incPoints.forEach(p => {
+                if (p.val > 0) {
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#00f5a0" class="chart-point" onclick="filterByDate('${p.date}')"><title>${formatDateBR(p.date)} - Receita: ${formatBRL(p.val)}</title></circle>`;
+                }
+            });
+
+            expPoints.forEach(p => {
+                if (p.val > 0) {
+                    svg += `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#ff4b2b" class="chart-point" onclick="filterByDate('${p.date}')"><title>${formatDateBR(p.date)} - Despesa: ${formatBRL(p.val)}</title></circle>`;
+                }
+            });
+
+            svg += `</svg>`;
+            container.innerHTML = svg;
+        }
+
+        function renderCategoryDonutChart(cycleTxs) {
+            const container = document.getElementById('category-donut-container');
+            const legend = document.getElementById('category-legend-list');
+            container.innerHTML = '';
+            legend.innerHTML = '';
+
+            const expenses = cycleTxs.filter(t => t.type === 'expense');
+            const catTotals = {};
+            let totalExp = 0;
+
+            expenses.forEach(t => {
+                const amt = parseFloat(t.amount);
+                catTotals[t.category] = (catTotals[t.category] || 0) + amt;
+                totalExp += amt;
+            });
+
+            if (totalExp === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500">Sem despesas registradas no ciclo.</p>`;
+                return;
+            }
+
+            // Draw SVG Donut
+            let accumulatedAngle = 0;
+            let svgPaths = '';
+
+            Object.entries(catTotals).forEach(([cat, val]) => {
+                const pct = val / totalExp;
+                const angle = pct * 360;
+                const color = CATEGORIES[cat]?.color || '#64748b';
+
+                // Calculate arc coordinates
+                const x1 = 100 + 70 * Math.cos((Math.PI * (accumulatedAngle - 90)) / 180);
+                const y1 = 100 + 70 * Math.sin((Math.PI * (accumulatedAngle - 90)) / 180);
+                accumulatedAngle += angle;
+                const x2 = 100 + 70 * Math.cos((Math.PI * (accumulatedAngle - 90)) / 180);
+                const y2 = 100 + 70 * Math.sin((Math.PI * (accumulatedAngle - 90)) / 180);
+
+                const largeArc = angle > 180 ? 1 : 0;
+                const d = `M 100 100 L ${x1} ${y1} A 70 70 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+                svgPaths += `<path d="${d}" fill="${color}" opacity="0.85" class="hover:opacity-100 transition-opacity cursor-pointer" onclick="filterByCategory('${cat}')"><title>${cat}: ${formatBRL(val)} (${(pct*100).toFixed(1)}%)</title></path>`;
+
+                // Append Legend Item
+                legend.innerHTML += `
+                    <div class="flex items-center justify-between cursor-pointer hover:bg-slate-800/50 p-1 rounded transition-all" onclick="filterByCategory('${cat}')">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${color}"></span>
+                            <span class="text-slate-300 font-medium">${cat}</span>
+                        </div>
+                        <span class="text-slate-400 font-mono">${formatBRL(val)}</span>
+                    </div>
+                `;
+            });
+
+            // SVG Donut with inner hole mask
+            container.innerHTML = `
+                <svg viewBox="0 0 200 200" class="w-48 h-48">
+                    ${svgPaths}
+                    <circle cx="100" cy="100" r="45" fill="#0f172a"/>
+                    <text x="100" y="95" text-anchor="middle" fill="#94a3b8" font-size="10">Total</text>
+                    <text x="100" y="112" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold">${formatBRL(totalExp)}</text>
+                </svg>
+            `;
+        }
+
+        function renderCycleCalendarGrid(cycleTxs, startDate, endDate) {
+            const grid = document.getElementById('cycle-calendar-grid');
+            grid.innerHTML = '';
+
+            let curr = new Date(startDate);
+
+            // Pad blank cells for start day of week
+            const firstDayOfWeek = curr.getDay();
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                grid.innerHTML += `<div class="p-2 rounded-xl bg-transparent"></div>`;
+            }
+
+            const todayStr = getTodayISODate();
+
+            while (curr <= endDate) {
+                const dateStr = curr.toISOString().split('T')[0];
+                const dayNum = curr.getDate();
+
+                // Calculate day's transactions
+                const dayTxs = cycleTxs.filter(t => t.date === dateStr);
+                let dayIncome = 0, dayExpense = 0;
+                dayTxs.forEach(t => {
+                    if (t.type === 'income') dayIncome += parseFloat(t.amount);
+                    if (t.type === 'expense') dayExpense += parseFloat(t.amount);
+                });
+
+                const isToday = dateStr === todayStr;
+                const hasActivity = dayTxs.length > 0;
+
+                grid.innerHTML += `
+                    <div onclick="filterByDate('${dateStr}')" class="p-2 rounded-xl border ${isToday ? 'border-cyan-500 bg-cyan-500/10' : 'border-slate-800/80 bg-slate-900/40'} hover:border-slate-700 cursor-pointer transition-all flex flex-col justify-between h-14 text-left">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-xs ${isToday ? 'text-cyan-400' : 'text-slate-300'}">${dayNum}</span>
+                            ${hasActivity ? `<span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>` : ''}
+                        </div>
+                        <div class="text-[9px] font-mono leading-tight">
+                            ${dayIncome > 0 ? `<p class="text-emerald-400">+${Math.round(dayIncome)}</p>` : ''}
+                            ${dayExpense > 0 ? `<p class="text-rose-400">-${Math.round(dayExpense)}</p>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                curr.setDate(curr.getDate() + 1);
+            }
+        }
+
+        function renderSixMonthTrendChart() {
+            const container = document.getElementById('six-month-bar-chart');
+            container.innerHTML = '';
+
+            const months = [];
+            for (let i = 5; i >= 0; i--) {
+                const { startDate, endDate } = getCycleBounds(-i);
+                
+                let inc = 0, exp = 0;
+                appState.transactions.forEach(t => {
+                    const d = new Date(t.date + 'T00:00:00');
+                    if (d >= startDate && d <= endDate) {
+                        if (t.type === 'income') inc += parseFloat(t.amount);
+                        if (t.type === 'expense') exp += parseFloat(t.amount);
+                    }
+                });
+
+                const label = `${startDate.getDate()}/${startDate.getMonth()+1}`;
+                months.push({ label, inc, exp });
+            }
+
+            const width = container.clientWidth || 500;
+            const height = container.clientHeight || 220;
+            const padding = 30;
+
+            let maxVal = 100;
+            months.forEach(m => maxVal = Math.max(maxVal, m.inc, m.exp));
+
+            let svg = `<svg width="${width}" height="${height}" class="w-full h-full">`;
+
+            const groupWidth = (width - 2 * padding) / months.length;
+            const barWidth = groupWidth * 0.3;
+
+            months.forEach((m, idx) => {
+                const xBase = padding + idx * groupWidth + groupWidth * 0.15;
+                
+                const hInc = (m.inc / maxVal) * (height - 2 * padding);
+                const hExp = (m.exp / maxVal) * (height - 2 * padding);
+
+                const yInc = height - padding - hInc;
+                const yExp = height - padding - hExp;
+
+                // Receita Bar
+                svg += `<rect x="${xBase}" y="${yInc}" width="${barWidth}" height="${hInc}" fill="#00f5a0" rx="3"><title>Receita: ${formatBRL(m.inc)}</title></rect>`;
+                // Despesa Bar
+                svg += `<rect x="${xBase + barWidth + 4}" y="${yExp}" width="${barWidth}" height="${hExp}" fill="#ff4b2b" rx="3"><title>Despesa: ${formatBRL(m.exp)}</title></rect>`;
+
+                // Label
+                svg += `<text x="${xBase + barWidth}" y="${height - 10}" text-anchor="middle" fill="#64748b" font-size="10">${m.label}</text>`;
+            });
+
+            svg += `</svg>`;
+            container.innerHTML = svg;
+        }
+
+        function renderOverviewBudgetBars(cycleTxs) {
+            const container = document.getElementById('overview-budget-bars');
+            container.innerHTML = '';
+
+            const expenses = cycleTxs.filter(t => t.type === 'expense');
+            const spentByCat = {};
+            expenses.forEach(t => {
+                spentByCat[t.category] = (spentByCat[t.category] || 0) + parseFloat(t.amount);
+            });
+
+            Object.entries(appState.budgets).forEach(([cat, limit]) => {
+                if (limit <= 0) return;
+                const spent = spentByCat[cat] || 0;
+                const pct = Math.min(100, (spent / limit) * 100);
+
+                let barColor = 'bg-cyan-500';
+                if (pct > 80) barColor = 'bg-amber-500';
+                if (pct >= 100) barColor = 'bg-rose-500';
+
+                container.innerHTML += `
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-300 font-medium">${cat}</span>
+                            <span class="text-slate-400 font-mono">${formatBRL(spent)} / ${formatBRL(limit)} (${pct.toFixed(0)}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-1.5">
+                            <div class="${barColor} h-1.5 rounded-full" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderRecentTransactionsOverview(cycleTxs) {
+            const list = document.getElementById('overview-recent-transactions-list');
+            list.innerHTML = '';
+
+            const recent = [...cycleTxs].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+
+            if (recent.length === 0) {
+                list.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhuma movimentação neste ciclo.</td></tr>`;
+                return;
+            }
+
+            recent.forEach(t => {
+                const isPositive = t.type === 'income' || t.type === 'redemption';
+                const badgeStyle = getTxTypeBadgeStyle(t.type);
+
+                list.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 transition-all">
+                        <td class="p-3 font-mono text-slate-400">${formatDateBR(t.date)}</td>
+                        <td class="p-3 font-semibold text-slate-200">${escapeHTML(t.description)}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${badgeStyle.bg} ${badgeStyle.text}">${badgeStyle.label}</span></td>
+                        <td class="p-3 text-slate-400">${t.category}</td>
+                        <td class="p-3 text-right font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-slate-200'}">
+                            ${isPositive ? '+' : '-'}${formatBRL(t.amount)}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // --- SECTION 2: TRANSACTIONS CRUD TABLE ---
+        function renderTransactionsTable() {
+            const list = document.getElementById('full-transactions-list');
+            const emptyState = document.getElementById('tx-empty-state');
+            list.innerHTML = '';
+
+            const search = document.getElementById('tx-search-input')?.value.toLowerCase() || '';
+            const filterType = document.getElementById('tx-filter-type')?.value || 'ALL';
+            const filterCat = document.getElementById('tx-filter-category')?.value || 'ALL';
+
+            let filtered = appState.transactions.filter(t => {
+                const matchText = t.description.toLowerCase().includes(search);
+                const matchType = filterType === 'ALL' || t.type === filterType;
+                const matchCat = filterCat === 'ALL' || t.category === filterCat;
+                return matchText && matchType && matchCat;
+            });
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(t => {
+                const badgeStyle = getTxTypeBadgeStyle(t.type);
+                const isPositive = t.type === 'income' || t.type === 'redemption';
+
+                list.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 transition-all">
+                        <td class="p-3 font-mono text-slate-400">${formatDateBR(t.date)}</td>
+                        <td class="p-3 font-semibold text-slate-200">${escapeHTML(t.description)}</td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${badgeStyle.bg} ${badgeStyle.text}">${badgeStyle.label}</span></td>
+                        <td class="p-3 text-slate-400">${t.category}</td>
+                        <td class="p-3 text-right font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-slate-200'}">
+                            ${isPositive ? '+' : '-'}${formatBRL(t.amount)}
+                        </td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="editTransaction('${t.id}')" class="text-slate-400 hover:text-cyan-400"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteTransaction('${t.id}')" class="text-slate-400 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function filterByDate(dateStr) {
+            navTo('transactions');
+            const searchInput = document.getElementById('tx-search-input');
+            if (searchInput) {
+                searchInput.value = dateStr;
+                renderTransactionsTable();
+            }
+        }
+
+        function filterByCategory(cat) {
+            navTo('transactions');
+            const catSelect = document.getElementById('tx-filter-category');
+            if (catSelect) {
+                catSelect.value = cat;
+                renderTransactionsTable();
+            }
+        }
+
+        function clearTransactionFilters() {
+            document.getElementById('tx-search-input').value = '';
+            document.getElementById('tx-filter-type').value = 'ALL';
+            document.getElementById('tx-filter-category').value = 'ALL';
+            renderTransactionsTable();
+        }
+
+        // --- SECTION 3: SMART EXTRATO IMPORTING ---
+        function handleFileSelect(evt) {
+            const file = evt.target.files[0];
+            if (!file) return;
+
+            const name = file.name.toLowerCase();
+            if (name.endsWith('.csv')) {
+                const reader = new FileReader();
+                reader.onload = e => parseCSVExtrato(e.target.result);
+                reader.readAsText(file);
+            } else if (name.endsWith('.ofx')) {
+                const reader = new FileReader();
+                reader.onload = e => parseOFXExtrato(e.target.result);
+                reader.readAsText(file);
+            } else if (name.endsWith('.pdf')) {
+                parsePDFExtrato(file);
+            } else {
+                showToast("Formato não suportado. Use PDF, CSV ou OFX.", "error");
+            }
+        }
+
+        function processPastedText() {
+            const raw = document.getElementById('paste-extrato-text').value;
+            if (!raw.trim()) return;
+            parseTextLinesExtrato(raw);
+        }
+
+        function parseTextLinesExtrato(text) {
+            const lines = text.split('\n');
+            const parsed = [];
+
+            // Pattern regex matching date DD/MM/YYYY, description, amount
+            const dateRegex = /(\d{2}\/\d{2}\/\d{4})/;// matching dates
+
+            lines.forEach((line, idx) => {
+                if (!line.trim()) return;
+                const matchDate = line.match(dateRegex);
+                if (matchDate) {
+                    const dateRaw = matchDate[1];
+                    const isoDate = parseBRDateToISO(dateRaw);
+                    
+                    // Extract amount (matches R$ X.XXX,XX or -R$ X,XX)
+                    const valMatch = line.match(/(-?\s*R\$\s*[\d\.,]+)/i) || line.match(/(-?[\d\.]+\,\d{2})/);
+                    let amount = 0;
+                    if (valMatch) {
+                        let cleanVal = valMatch[1].replace(/R\$/gi, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+                        amount = Math.abs(parseFloat(cleanVal));
+                    }
+
+                    if (amount > 0 && isoDate) {
+                        const desc = line.replace(matchDate[0], '').replace(valMatch ? valMatch[0] : '', '').trim() || "Movimentação Importada";
+                        const { type, category } = categorizeIntelligently(desc, line);
+
+                        parsed.push({
+                            id: 'imp_' + Date.now() + '_' + idx,
+                            date: isoDate,
+                            description: desc,
+                            amount: amount,
+                            type: type,
+                            category: category,
+                            included: true,
+                            isDuplicate: checkPotentialDuplicate(isoDate, amount, desc)
+                        });
+                    }
+                }
+            });
+
+            showImportPreview(parsed);
+        }
+
+        function parseCSVExtrato(csvText) {
+            const lines = csvText.split('\n');
+            const parsed = [];
+
+            lines.forEach((line, idx) => {
+                const cols = line.split(/[,;]/);
+                if (cols.length >= 3) {
+                    const dateRaw = cols[0].replace(/"/g, '').trim();
+                    const desc = cols[1].replace(/"/g, '').trim();
+                    const valRaw = cols[2].replace(/"/g, '').trim().replace(/\./g, '').replace(',', '.');
+
+                    const isoDate = parseBRDateToISO(dateRaw) || dateRaw;
+                    const amount = Math.abs(parseFloat(valRaw));
+
+                    if (isoDate && !isNaN(amount) && amount > 0) {
+                        const { type, category } = categorizeIntelligently(desc, line);
+                        parsed.push({
+                            id: 'imp_' + Date.now() + '_' + idx,
+                            date: isoDate,
+                            description: desc,
+                            amount: amount,
+                            type: type,
+                            category: category,
+                            included: true,
+                            isDuplicate: checkPotentialDuplicate(isoDate, amount, desc)
+                        });
+                    }
+                }
+            });
+
+            showImportPreview(parsed);
+        }
+
+        function parseOFXExtrato(ofxText) {
+            const parsed = [];
+            const trnRegex = /<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi;
+            let match;
+
+            let idx = 0;
+            while ((match = trnRegex.exec(ofxText)) !== null) {
+                const block = match[1];
+                const amtMatch = block.match(/<TRNAMT>([\d\.-]+)/i);
+                const dateMatch = block.match(/<DTPOSTED>(\d{8})/i);
+                const memoMatch = block.match(/<MEMO>(.*)/i);
+
+                if (amtMatch && dateMatch) {
+                    const rawAmt = parseFloat(amtMatch[1]);
+                    const amount = Math.abs(rawAmt);
+                    const y = dateMatch[1].substring(0, 4);
+                    const m = dateMatch[1].substring(4, 6);
+                    const d = dateMatch[1].substring(6, 8);
+                    const isoDate = `${y}-${m}-${d}`;
+                    const desc = memoMatch ? memoMatch[1].trim() : "Transação OFX";
+
+                    const { type, category } = categorizeIntelligently(desc, block);
+
+                    parsed.push({
+                        id: 'imp_ofx_' + Date.now() + '_' + idx,
+                        date: isoDate,
+                        description: desc,
+                        amount: amount,
+                        type: type,
+                        category: category,
+                        included: true,
+                        isDuplicate: checkPotentialDuplicate(isoDate, amount, desc)
+                    });
+                    idx++;
+                }
+            }
+
+            showImportPreview(parsed);
+        }
+
+        async function parsePDFExtrato(file) {
+            if (typeof pdfjsLib === 'undefined') {
+                showToast("PDF.js ainda está carregando. Tente novamente.", "error");
+                return;
+            }
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = '';
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    const pageText = content.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+
+                parseTextLinesExtrato(fullText);
+            } catch(e) {
+                console.error("PDF Parsing Error:", e);
+                showToast("Erro ao ler PDF. Cole o texto manualmente.", "error");
+            }
+        }
+
+        function categorizeIntelligently(desc, rawLine) {
+            const d = (desc + ' ' + rawLine).toLowerCase();
+
+            // Default defaults
+            let type = 'expense';
+            let category = 'Outros';
+
+            if (d.includes('pix recebido') || d.includes('salario') || d.includes('proventos') || d.includes('rendimento')) {
+                type = 'income';
+                category = d.includes('salario') ? 'Salário' : 'Outros';
+            } else if (d.includes('aplicacao') || d.includes('cdb') || d.includes('tesouro') || d.includes('investimento')) {
+                type = 'investment';
+                category = 'Investimentos';
+            } else if (d.includes('resgate')) {
+                type = 'redemption';
+                category = 'Investimentos';
+            } else {
+                // Expense heuristics
+                if (d.includes('mercado') || d.includes('supermercado') || d.includes('iFood') || d.includes('restaurante')) category = 'Alimentação';
+                else if (d.includes('aluguel') || d.includes('condominio') || d.includes('luz') || d.includes('energia')) category = 'Moradia';
+                else if (d.includes('uber') || d.includes('posto') || d.includes('combustivel')) category = 'Transporte';
+                else if (d.includes('farmacia') || d.includes('hospital') || d.includes('drogaria')) category = 'Saúde';
+                else if (d.includes('cinema') || d.includes('steam') || d.includes('netflix')) category = 'Lazer';
+            }
+
+            return { type, category };
+        }
+
+        function checkPotentialDuplicate(date, amount, desc) {
+            return appState.transactions.some(t => {
+                return t.date === date && Math.abs(parseFloat(t.amount) - amount) < 0.01 && t.description.toLowerCase() === desc.toLowerCase();
+            });
+        }
+
+        function showImportPreview(items) {
+            pendingImportItems = items;
+            const container = document.getElementById('import-preview-container');
+            const list = document.getElementById('import-preview-list');
+            const dupBanner = document.getElementById('duplicate-warning-banner');
+
+            list.innerHTML = '';
+            let dupCount = 0;
+
+            items.forEach((item, idx) => {
+                if (item.isDuplicate) {
+                    item.included = false; // Uncheck duplicates by default per SPEC
+                    dupCount++;
+                }
+
+                list.innerHTML += `
+                    <tr class="hover:bg-slate-800/40 ${item.isDuplicate ? 'bg-amber-500/5' : ''}">
+                        <td class="p-3 text-center">
+                            <input type="checkbox" ${item.included ? 'checked' : ''} onchange="pendingImportItems[${idx}].included = this.checked" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0">
+                        </td>
+                        <td class="p-3 font-mono text-slate-400">${formatDateBR(item.date)}</td>
+                        <td class="p-3 font-semibold text-slate-200">
+                            <input type="text" value="${escapeHTML(item.description)}" onchange="pendingImportItems[${idx}].description = this.value" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                        </td>
+                        <td class="p-3">
+                            <select onchange="pendingImportItems[${idx}].type = this.value" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                                <option value="expense" ${item.type === 'expense' ? 'selected' : ''}>Despesa</option>
+                                <option value="income" ${item.type === 'income' ? 'selected' : ''}>Receita</option>
+                                <option value="investment" ${item.type === 'investment' ? 'selected' : ''}>Aplicação</option>
+                                <option value="redemption" ${item.type === 'redemption' ? 'selected' : ''}>Resgate</option>
+                                <option value="transfer" ${item.type === 'transfer' ? 'selected' : ''}>Transferência</option>
+                            </select>
+                        </td>
+                        <td class="p-3">
+                            <select onchange="pendingImportItems[${idx}].category = this.value" class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-xs text-white">
+                                ${Object.keys(CATEGORIES).map(c => `<option value="${c}" ${item.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+                            </select>
+                        </td>
+                        <td class="p-3 text-right font-mono font-bold text-white">${formatBRL(item.amount)}</td>
+                    </tr>
+                `;
+            });
+
+            if (dupCount > 0) dupBanner.classList.remove('hidden');
+            else dupBanner.classList.add('hidden');
+
+            document.getElementById('import-count-badge').innerText = `${items.length} detectados`;
+            container.classList.remove('hidden');
+        }
+
+        function cancelImportPreview() {
+            pendingImportItems = [];
+            document.getElementById('import-preview-container').classList.add('hidden');
+        }
+
+        function confirmAndSaveImport() {
+            const toSave = pendingImportItems.filter(i => i.included);
+            if (toSave.length === 0) {
+                showToast("Nenhum item selecionado para salvar.", "error");
+                return;
+            }
+
+            toSave.forEach(item => {
+                appState.transactions.push({
+                    id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+                    date: item.date,
+                    description: item.description,
+                    amount: item.amount,
+                    type: item.type,
+                    category: item.category,
+                    createdAt: new Date().toISOString()
+                });
+            });
+
+            saveToLocalStorage();
+            cancelImportPreview();
+            showToast(`${toSave.length} lançamentos importados com sucesso!`, "success");
+            navTo('transactions');
+        }
+
+        // --- SECTION 4: BUDGET MANAGEMENT ---
+        function renderBudgetSection(startDate, endDate) {
+            const grid = document.getElementById('budget-cards-grid');
+            grid.innerHTML = '';
+
+            const cycleTxs = appState.transactions.filter(t => {
+                const d = new Date(t.date + 'T00:00:00');
+                return d >= startDate && d <= endDate && t.type === 'expense';
+            });
+
+            const spentByCat = {};
+            cycleTxs.forEach(t => {
+                spentByCat[t.category] = (spentByCat[t.category] || 0) + parseFloat(t.amount);
+            });
+
+            Object.entries(appState.budgets).forEach(([cat, limit]) => {
+                const spent = spentByCat[cat] || 0;
+                const remaining = limit - spent;
+                const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+
+                let statusBadge = `<span class="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px] font-semibold">Normal</span>`;
+                if (pct > 80 && pct < 100) statusBadge = `<span class="text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded text-[10px] font-semibold">Atenção (>80%)</span>`;
+                if (pct >= 100) statusBadge = `<span class="text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded text-[10px] font-semibold">Excedido</span>`;
+
+                grid.innerHTML += `
+                    <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-outfit font-bold text-slate-100 text-base">${cat}</h4>
+                            ${statusBadge}
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <p class="text-xl font-bold text-white font-mono">${formatBRL(spent)}</p>
+                            <p class="text-xs text-slate-400">Limite: ${formatBRL(limit)}</p>
+                        </div>
+                        <div class="w-full bg-slate-800 rounded-full h-2">
+                            <div class="h-2 rounded-full ${pct >= 100 ? 'bg-rose-500' : pct > 80 ? 'bg-amber-500' : 'bg-cyan-500'}" style="width: ${pct}%"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 text-right">Restante: <strong class="${remaining < 0 ? 'text-rose-400' : 'text-slate-200'}">${formatBRL(remaining)}</strong></p>
+                    </div>
+                `;
+            });
+        }
+
+        function openBudgetModal() {
+            const list = document.getElementById('budget-edit-list');
+            list.innerHTML = '';
+
+            Object.entries(appState.budgets).forEach(([cat, limit]) => {
+                list.innerHTML += `
+                    <div class="flex items-center justify-between gap-3">
+                        <label class="text-xs font-semibold text-slate-300 w-1/3">${cat}</label>
+                        <input type="number" id="budget-input-${cat}" value="${limit}" step="50" min="0" class="w-2/3 px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white">
+                    </div>
+                `;
+            });
+
+            document.getElementById('modal-budget').classList.remove('hidden');
+        }
+
+        function closeBudgetModal() {
+            document.getElementById('modal-budget').classList.add('hidden');
+        }
+
+        function saveBudgetLimits() {
+            Object.keys(appState.budgets).forEach(cat => {
+                const input = document.getElementById(`budget-input-${cat}`);
+                if (input) {
+                    appState.budgets[cat] = parseFloat(input.value) || 0;
+                }
+            });
+
+            saveToLocalStorage();
+            closeBudgetModal();
+            showToast("Limites de orçamento atualizados!", "success");
+            renderAppView();
+        }
+
+        // --- SECTION 5: GOALS MANAGEMENT ---
+        function renderGoalsSection() {
+            const grid = document.getElementById('goals-cards-grid');
+            grid.innerHTML = '';
+
+            if (appState.goals.length === 0) {
+                grid.innerHTML = `<div class="col-span-3 py-12 text-center text-slate-500">Nenhuma meta criada ainda. Clique em "Nova Meta".</div>`;
+                return;
+            }
+
+            appState.goals.forEach(goal => {
+                const target = parseFloat(goal.targetAmount);
+                const saved = parseFloat(goal.savedAmount);
+                const pct = Math.min(100, (saved / target) * 100);
+                const remaining = Math.max(0, target - saved);
+
+                // Required Monthly Contribution Calculation
+                let monthlyContribText = '';
+                if (goal.deadline) {
+                    const deadlineDate = new Date(goal.deadline);
+                    const monthsLeft = Math.max(1, Math.ceil((deadlineDate - new Date()) / (1000 * 60 * 60 * 24 * 30)));
+                    const monthlyReq = remaining / monthsLeft;
+                    monthlyContribText = `Aporte de ${formatBRL(monthlyReq)}/mês (${monthsLeft} mes${monthsLeft > 1 ? 'es' : ''})`;
+                }
+
+                grid.innerHTML += `
+                    <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-outfit font-bold text-white text-base">${escapeHTML(goal.title)}</h4>
+                            <button onclick="deleteGoal('${goal.id}')" class="text-slate-500 hover:text-rose-400 text-xs"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-xs">
+                                <span class="text-slate-400 font-mono">${formatBRL(saved)}</span>
+                                <span class="text-slate-200 font-bold font-mono">${formatBRL(target)}</span>
+                            </div>
+                            <div class="w-full bg-slate-800 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+                        ${monthlyContribText ? `<p class="text-[11px] text-cyan-400 bg-cyan-500/10 p-2 rounded-lg border border-cyan-500/20">${monthlyContribText}</p>` : ''}
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="text-[11px] text-slate-500">${pct.toFixed(0)}% concluído</span>
+                            <button onclick="simulateGoalDeposit('${goal.id}')" class="px-3 py-1 bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30 rounded-lg text-xs font-semibold">
+                                + Aportar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function openGoalModal() {
+            document.getElementById('modal-goal').classList.remove('hidden');
+        }
+
+        function closeGoalModal() {
+            document.getElementById('modal-goal').classList.add('hidden');
+        }
+
+        function handleGoalSubmit(evt) {
+            evt.preventDefault();
+            const title = document.getElementById('goal-input-title').value;
+            const target = parseFloat(document.getElementById('goal-input-target').value);
+            const saved = parseFloat(document.getElementById('goal-input-saved').value) || 0;
+            const deadline = document.getElementById('goal-input-deadline').value;
+
+            appState.goals.push({
+                id: 'goal_' + Date.now(),
+                title,
+                targetAmount: target,
+                savedAmount: saved,
+                deadline
+            });
+
+            saveToLocalStorage();
+            closeGoalModal();
+            showToast("Meta financeira criada!", "success");
+            renderAppView();
+        }
+
+        function simulateGoalDeposit(goalId) {
+            const goal = appState.goals.find(g => g.id === goalId);
+            if (goal) {
+                const add = prompt(`Quanto deseja aportar na meta "${goal.title}"?`, "100");
+                if (add && !isNaN(parseFloat(add))) {
+                    goal.savedAmount += parseFloat(add);
+                    saveToLocalStorage();
+                    showToast("Aporte registrado na meta!", "success");
+                    renderAppView();
+                }
+            }
+        }
+
+        function deleteGoal(goalId) {
+            if (confirm("Deseja realmente excluir esta meta?")) {
+                appState.goals = appState.goals.filter(g => g.id !== goalId);
+                saveToLocalStorage();
+                renderAppView();
+            }
+        }
+
+        // --- SECTION 6: INVESTMENTS & QUANTUM SIMULATOR ---
+        function renderInvestmentsSection() {
+            let totalInv = 0, totalRed = 0;
+            appState.transactions.forEach(t => {
+                if (t.type === 'investment') totalInv += parseFloat(t.amount);
+                if (t.type === 'redemption') totalRed += parseFloat(t.amount);
+            });
+
+            document.getElementById('inv-total-allocated').innerText = formatBRL(totalInv - totalRed);
+            document.getElementById('inv-total-deposits').innerText = formatBRL(totalInv);
+            document.getElementById('inv-total-withdrawals').innerText = formatBRL(totalRed);
+
+            runInvestmentSimulation();
+        }
+
+        function runInvestmentSimulation() {
+            const initial = parseFloat(document.getElementById('sim-initial').value) || 0;
+            const monthly = parseFloat(document.getElementById('sim-monthly').value) || 0;
+            const years = parseInt(document.getElementById('sim-years').value) || 10;
+            const rateBase = parseFloat(document.getElementById('sim-rate').value) || 10.5;
+
+            // Scenario Annual Rates
+            const rCons = rateBase - 3.0; // Conservador
+            const rCent = rateBase;        // Central
+            const rOptim = rateBase + 4.0; // Otimista
+
+            const months = years * 12;
+
+            function calcCompound(annualRate) {
+                const rMonthly = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+                let balance = initial;
+                let invested = initial;
+
+                for (let i = 0; i < months; i++) {
+                    balance = balance * (1 + rMonthly) + monthly;
+                    invested += monthly;
+                }
+                return { total: balance, invested };
+            }
+
+            const scCons = calcCompound(rCons);
+            const scCent = calcCompound(rCent);
+            const scOptim = calcCompound(rOptim);
+
+            // Render Scenario Cards
+            const container = document.getElementById('sim-scenario-cards');
+            container.innerHTML = `
+                <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2">
+                    <p class="text-xs text-slate-400 font-semibold uppercase">Cenário Conservador (${rCons.toFixed(1)}% a.a.)</p>
+                    <p class="text-2xl font-outfit font-bold text-slate-200">${formatBRL(scCons.total)}</p>
+                    <p class="text-[11px] text-slate-500">Total Investido: ${formatBRL(scCons.invested)}</p>
+                </div>
+
+                <div class="glass-panel-glow p-4 rounded-xl space-y-2">
+                    <p class="text-xs text-cyan-400 font-semibold uppercase">Cenário Central (${rCent.toFixed(1)}% a.a.)</p>
+                    <p class="text-2xl font-outfit font-bold text-cyan-300">${formatBRL(scCent.total)}</p>
+                    <p class="text-[11px] text-cyan-500/80">Total Investido: ${formatBRL(scCent.invested)}</p>
+                </div>
+
+                <div class="glass-panel p-4 rounded-xl border border-slate-800 space-y-2">
+                    <p class="text-xs text-emerald-400 font-semibold uppercase">Cenário Otimista (${rOptim.toFixed(1)}% a.a.)</p>
+                    <p class="text-2xl font-outfit font-bold text-emerald-300">${formatBRL(scOptim.total)}</p>
+                    <p class="text-[11px] text-slate-500">Total Investido: ${formatBRL(scOptim.invested)}</p>
+                </div>
+            `;
+
+            renderSimulationChart(years, initial, monthly, rCons, rCent, rOptim);
+        }
+
+        function renderSimulationChart(years, initial, monthly, rCons, rCent, rOptim) {
+            const chartBox = document.getElementById('simulation-chart-container');
+            chartBox.innerHTML = '';
+
+            const width = chartBox.clientWidth || 600;
+            const height = chartBox.clientHeight || 240;
+            const padding = 30;
+
+            const calcPoints = (annualRate) => {
+                const rMonthly = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+                let balance = initial;
+                const points = [{ year: 0, val: initial }];
+                for (let y = 1; y <= years; y++) {
+                    for (let m = 0; m < 12; m++) {
+                        balance = balance * (1 + rMonthly) + monthly;
+                    }
+                    points.push({ year: y, val: balance });
+                }
+                return points;
+            };
+
+            const ptsCons = calcPoints(rCons);
+            const ptsCent = calcPoints(rCent);
+            const ptsOptim = calcPoints(rOptim);
+
+            const maxVal = ptsOptim[ptsOptim.length - 1].val || 100;
+
+            let svg = `<svg width="${width}" height="${height}" class="w-full h-full">`;
+
+            const getX = (yr) => padding + (width - 2 * padding) * (yr / years);
+            const getY = (val) => height - padding - ((val / maxVal) * (height - 2 * padding));
+
+            const makePath = (pts) => `M ${getX(pts[0].year)} ${getY(pts[0].val)} ` + pts.map(p => `L ${getX(p.year)} ${getY(p.val)}`).join(' ');
+
+            svg += `<path d="${makePath(ptsCons)}" fill="none" stroke="#64748b" stroke-width="2"/>`;
+            svg += `<path d="${makePath(ptsCent)}" fill="none" stroke="#00f2fe" stroke-width="3"/>`;
+            svg += `<path d="${makePath(ptsOptim)}" fill="none" stroke="#00f5a0" stroke-width="2"/>`;
+
+            svg += `</svg>`;
+            chartBox.innerHTML = svg;
+        }
+
+        // --- SECTION 7: REPORTS & SMART ANALYSIS ---
+        function renderReportsSection(startDate, endDate) {
+            const cycleTxs = appState.transactions.filter(t => {
+                const d = new Date(t.date + 'T00:00:00');
+                return d >= startDate && d <= endDate;
+            });
+
+            let inc = 0, exp = 0;
+            const expByCat = {};
+
+            cycleTxs.forEach(t => {
+                const amt = parseFloat(t.amount);
+                if (t.type === 'income') inc += amt;
+                if (t.type === 'expense') {
+                    exp += amt;
+                    expByCat[t.category] = (expByCat[t.category] || 0) + amt;
+                }
+            });
+
+            document.getElementById('rep-income').innerText = formatBRL(inc);
+            document.getElementById('rep-expense').innerText = formatBRL(exp);
+            document.getElementById('rep-net').innerText = formatBRL(inc - exp);
+
+            // Top Expense Valves
+            const topExpList = document.getElementById('reports-top-expenses');
+            topExpList.innerHTML = '';
+
+            const sortedCats = Object.entries(expByCat).sort((a, b) => b[1] - a[1]);
+            if (sortedCats.length === 0) {
+                topExpList.innerHTML = `<p class="text-xs text-slate-500">Nenhum gasto no ciclo.</p>`;
+            } else {
+                sortedCats.forEach(([cat, val]) => {
+                    const pct = exp > 0 ? (val / exp) * 100 : 0;
+                    topExpList.innerHTML += `
+                        <div class="flex items-center justify-between text-xs p-2 rounded bg-slate-900 border border-slate-800">
+                            <span class="text-slate-200 font-medium">${cat}</span>
+                            <span class="font-mono text-cyan-400 font-bold">${formatBRL(val)} (${pct.toFixed(0)}%)</span>
+                        </div>
+                    `;
+                });
+            }
+
+            // Smart Text Analysis Generator
+            const smartText = document.getElementById('smart-analysis-text');
+            if (inc === 0 && exp === 0) {
+                smartText.innerText = "Nenhuma movimentação registrada no ciclo atual para gerar análise contextual.";
+            } else {
+                const topCat = sortedCats[0] ? sortedCats[0][0] : "Outros";
+                const net = inc - exp;
+                if (net > 0) {
+                    smartText.innerHTML = `No ciclo atual, seu balanço é <strong>positivo em ${formatBRL(net)}</strong>. Sua principal fonte de gastos foi a categoria <strong>${topCat}</strong>. Você reteve <strong>${((net/inc)*100).toFixed(1)}%</strong> da sua receita.`;
+                } else {
+                    smartText.innerHTML = `Atenção: Suas despesas superaram as receitas no ciclo em <strong>${formatBRL(Math.abs(net))}</strong>. A maior pressão financeira veio da categoria <strong>${topCat}</strong>. Recomendamos revisar os limites de orçamento.`;
+                }
+            }
+        }
+
+        // --- SECTION 8: CONFIGURATIONS & BACKUP ---
+        function populateSettingsInputs() {
+            document.getElementById('setting-cycle-day').value = appState.settings.cycleStartDay || 5;
+            document.getElementById('setting-expected-salary').value = appState.settings.expectedSalary || 5000;
+            document.getElementById('setting-initial-cash').value = appState.settings.initialCash || 0;
+        }
+
+        function saveSettingsParameters() {
+            appState.settings.cycleStartDay = parseInt(document.getElementById('setting-cycle-day').value) || 5;
+            appState.settings.expectedSalary = parseFloat(document.getElementById('setting-expected-salary').value) || 0;
+            appState.settings.initialCash = parseFloat(document.getElementById('setting-initial-cash').value) || 0;
+
+            saveToLocalStorage();
+            showToast("Configurações atualizadas!", "success");
+            renderAppView();
+        }
+
+        function exportJSONBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", `SOBRA_Backup_${getTodayISODate()}.json`);
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+            showToast("Backup JSON baixado!", "success");
+        }
+
+        function importJSONBackup(evt) {
+            const file = evt.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.settings && data.transactions) {
+                        appState = data;
+                        saveToLocalStorage();
+                        showToast("Backup restaurado com sucesso!", "success");
+                        renderAppView();
+                    } else {
+                        showToast("Estrutura de arquivo JSON inválida.", "error");
+                    }
+                } catch(err) {
+                    showToast("Erro ao ler JSON.", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmResetAllData() {
+            if (confirm("ATENÇÃO: Deseja realmente apagar todos os dados do SOBRA? Esta ação não pode ser desfeita.")) {
+                resetToEmptyState();
+            }
+        }
+
+        function resetToEmptyState() {
+            appState = {
+                settings: { cycleStartDay: 5, expectedSalary: 5000, initialCash: 0, isDemo: false },
+                transactions: [],
+                budgets: { 'Alimentação': 1200, 'Moradia': 2000, 'Transporte': 600, 'Lazer': 500, 'Saúde': 400, 'Outros': 300 },
+                goals: []
+            };
+            saveToLocalStorage();
+            showToast("Sistema reiniciado.", "info");
+            renderAppView();
+        }
+
+        // --- LOAD DEMO DATA FOR TESTING ---
+        function loadDemoData() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+
+            appState.settings.isDemo = true;
+            appState.settings.initialCash = 1500;
+            appState.transactions = [
+                { id: 'demo_1', date: `${year}-${month}-05`, description: 'Salário Mensal', amount: 6500, type: 'income', category: 'Salário' },
+                { id: 'demo_2', date: `${year}-${month}-06`, description: 'Supermercado Carrefour', amount: 640.50, type: 'expense', category: 'Alimentação' },
+                { id: 'demo_3', date: `${year}-${month}-08`, description: 'Aluguel & Condomínio', amount: 1850.00, type: 'expense', category: 'Moradia' },
+                { id: 'demo_4', date: `${year}-${month}-10`, description: 'Aporte CDB Inter 102% CDI', amount: 1000.00, type: 'investment', category: 'Investimentos' },
+                { id: 'demo_5', date: `${year}-${month}-12`, description: 'Combustível Posto Shell', amount: 210.00, type: 'expense', category: 'Transporte' },
+                { id: 'demo_6', date: `${year}-${month}-15`, description: 'Farmácia Raia', amount: 95.80, type: 'expense', category: 'Saúde' },
+                { id: 'demo_7', date: `${year}-${month}-18`, description: 'Jantar Restaurante', amount: 180.00, type: 'expense', category: 'Alimentação' },
+                { id: 'demo_8', date: `${year}-${month}-20`, description: 'Resgate Parcial CDB', amount: 300.00, type: 'redemption', category: 'Investimentos' }
+            ];
+
+            appState.goals = [
+                { id: 'goal_demo_1', title: 'Reserva de Emergência', targetAmount: 20000, savedAmount: 8500, deadline: `${year+1}-12-31` },
+                { id: 'goal_demo_2', title: 'Viagem de Férias', targetAmount: 5000, savedAmount: 2200, deadline: `${year}-12-15` }
+            ];
+
+            saveToLocalStorage();
+            showToast("Dados demonstrativos carregados!", "success");
+            renderAppView();
+        }
+
+        // --- TRANSACTION CRUD MODAL HANDLERS ---
+        function openTransactionModal(editId = null) {
+            populateCategoryDropdowns();
+            const form = document.getElementById('tx-form');
+            form.reset();
+            document.getElementById('tx-edit-id').value = '';
+
+            if (editId) {
+                const tx = appState.transactions.find(t => t.id === editId);
+                if (tx) {
+                    document.getElementById('modal-tx-title').innerText = "Editar Lançamento";
+                    document.getElementById('tx-edit-id').value = tx.id;
+                    document.getElementById('tx-input-desc').value = tx.description;
+                    document.getElementById('tx-input-amount').value = tx.amount;
+                    document.getElementById('tx-input-date').value = tx.date;
+                    document.getElementById('tx-input-type').value = tx.type;
+                    updateCategoryOptionsByTxType();
+                    document.getElementById('tx-input-category').value = tx.category;
+                }
+            } else {
+                document.getElementById('modal-tx-title').innerText = "Novo Lançamento";
+                document.getElementById('tx-input-date').value = getTodayISODate();
+                updateCategoryOptionsByTxType();
+            }
+
+            document.getElementById('modal-transaction').classList.remove('hidden');
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('modal-transaction').classList.add('hidden');
+        }
+
+        function handleTransactionSubmit(evt) {
+            evt.preventDefault();
+            const editId = document.getElementById('tx-edit-id').value;
+            const desc = document.getElementById('tx-input-desc').value;
+            const amount = parseFloat(document.getElementById('tx-input-amount').value);
+            const date = document.getElementById('tx-input-date').value;
+            const type = document.getElementById('tx-input-type').value;
+            const category = document.getElementById('tx-input-category').value;
+
+            if (editId) {
+                const idx = appState.transactions.findIndex(t => t.id === editId);
+                if (idx !== -1) {
+                    appState.transactions[idx] = { ...appState.transactions[idx], description: desc, amount, date, type, category };
+                }
+            } else {
+                appState.transactions.push({
+                    id: 'tx_' + Date.now(),
+                    description: desc,
+                    amount,
+                    date,
+                    type,
+                    category,
+                    createdAt: new Date().toISOString()
+                });
+            }
+
+            saveToLocalStorage();
+            closeTransactionModal();
+            showToast(editId ? "Lançamento atualizado!" : "Lançamento registrado!", "success");
+            renderAppView();
+        }
+
+        function editTransaction(id) {
+            openTransactionModal(id);
+        }
+
+        function deleteTransaction(id) {
+            if (confirm("Excluir este lançamento?")) {
+                appState.transactions = appState.transactions.filter(t => t.id !== id);
+                saveToLocalStorage();
+                showToast("Lançamento excluído.", "info");
+                renderAppView();
+            }
+        }
+
+        function updateCategoryOptionsByTxType() {
+            const type = document.getElementById('tx-input-type').value;
+            const catSelect = document.getElementById('tx-input-category');
+            if (type === 'investment' || type === 'redemption') {
+                catSelect.value = 'Investimentos';
+            }
+        }
+
+        function populateCategoryDropdowns() {
+            const filterCat = document.getElementById('tx-filter-category');
+            const inputCat = document.getElementById('tx-input-category');
+
+            if (filterCat) {
+                filterCat.innerHTML = `<option value="ALL">Todas as Categorias</option>` +
+                    Object.keys(CATEGORIES).map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+
+            if (inputCat) {
+                inputCat.innerHTML = Object.keys(CATEGORIES).map(c => `<option value="${c}">${c}</option>`).join('');
+            }
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function formatBRL(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function formatDateBR(dateInput) {
+            if (!dateInput) return '';
+            const d = typeof dateInput === 'string' ? new Date(dateInput + 'T00:00:00') : dateInput;
+            return d.toLocaleDateString('pt-BR');
+        }
+
+        function parseBRDateToISO(brStr) {
+            const parts = brStr.split('/');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+            }
+            return null;
+        }
+
+        function getTodayISODate() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        function getTxTypeBadgeStyle(type) {
+            switch(type) {
+                case 'income': return { bg: 'bg-emerald-500/10', text: 'text-emerald-400', label: 'Receita' };
+                case 'expense': return { bg: 'bg-rose-500/10', text: 'text-rose-400', label: 'Despesa' };
+                case 'investment': return { bg: 'bg-purple-500/10', text: 'text-purple-400', label: 'Aplicação' };
+                case 'redemption': return { bg: 'bg-cyan-500/10', text: 'text-cyan-400', label: 'Resgate' };
+                case 'transfer': return { bg: 'bg-slate-500/10', text: 'text-slate-400', label: 'Transferência' };
+                default: return { bg: 'bg-slate-800', text: 'text-slate-300', label: type };
+            }
+        }
+
+        function exportTransactionsCSV() {
+            let csv = "Data;Descrição;Tipo;Categoria;Valor\n";
+            appState.transactions.forEach(t => {
+                csv += `${formatDateBR(t.date)};"${t.description}";${t.type};${t.category};${t.amount}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SOBRA_Movimentacoes_${getTodayISODate()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("CSV exportado!", "success");
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let icon = 'fa-circle-info', border = 'border-cyan-500/30', bg = 'bg-slate-900/90', text = 'text-cyan-300';
+            if (type === 'success') { icon = 'fa-circle-check'; border = 'border-emerald-500/30'; text = 'text-emerald-300'; }
+            if (type === 'error') { icon = 'fa-triangle-exclamation'; border = 'border-rose-500/30'; text = 'text-rose-300'; }
+
+            toast.className = `glass-panel p-3.5 rounded-xl border ${border} ${bg} ${text} text-xs flex items-center gap-2.5 shadow-xl pointer-events-auto transition-all transform duration-300 translate-x-12 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-12', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-12');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
