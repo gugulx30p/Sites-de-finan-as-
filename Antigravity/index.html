@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KAPITAL — Smart Finance OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Tema Padrão: Emerald Growth (Inspirado em Robinhood & Wise) */
+            --bg-base: #06080c;
+            --bg-surface: #0c1017;
+            --bg-card: #121824;
+            --bg-card-hover: #182030;
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --border-active: rgba(0, 245, 155, 0.3);
+            
+            --brand-primary: #00f59b;
+            --brand-primary-rgb: 0, 245, 155;
+            --brand-gradient: linear-gradient(135deg, #00f59b 0%, #00c978 100%);
+            --brand-glow: rgba(0, 245, 155, 0.25);
+            
+            --text-main: #f1f5f9;
+            --text-muted: #8b9bb4;
+            --text-dark: #475569;
+
+            --income: #00f59b;
+            --income-bg: rgba(0, 245, 155, 0.1);
+            --expense: #ff4d6d;
+            --expense-bg: rgba(255, 77, 109, 0.1);
+            
+            --accent-cyan: #00d4ff;
+            --accent-amber: #ffb703;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Temas Alternativos baseados em Fintechs Famosas */
+        [data-theme="inter"] {
+            /* Inspirado no Banco Inter */
+            --border-active: rgba(255, 122, 0, 0.4);
+            --brand-primary: #ff7a00;
+            --brand-primary-rgb: 255, 122, 0;
+            --brand-gradient: linear-gradient(135deg, #ff9100 0%, #ff5e00 100%);
+            --brand-glow: rgba(255, 122, 0, 0.25);
+            --income: #00e676;
+            --income-bg: rgba(0, 230, 118, 0.1);
+        }
+
+        [data-theme="revolut"] {
+            /* Inspirado no Revolut Ultra / Apple Card */
+            --border-active: rgba(0, 153, 255, 0.4);
+            --brand-primary: #00a6ff;
+            --brand-primary-rgb: 0, 166, 255;
+            --brand-gradient: linear-gradient(135deg, #00d4ff 0%, #0077ff 100%);
+            --brand-glow: rgba(0, 166, 255, 0.25);
+            --income: #00e699;
+            --income-bg: rgba(0, 230, 153, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* Ambient Glow & Grid */
+        .ambient-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            background: 
+                radial-gradient(circle at 15% 10%, rgba(var(--brand-primary-rgb), 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(0, 212, 255, 0.04) 0%, transparent 50%);
+            transition: background 0.8s ease;
+        }
+
+        .ambient-grid {
+            position: fixed;
+            inset: 0;
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            mask-image: radial-gradient(ellipse at 50% 20%, black 40%, transparent 80%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-wrapper {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px 20px 100px;
+        }
+
+        /* Top Navigation Header */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 28px;
+            border-bottom: 1px solid var(--border-subtle);
+            margin-bottom: 28px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background: var(--brand-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 22px;
+            color: #06080c;
+            box-shadow: 0 8px 24px var(--brand-glow);
+            transition: var(--transition);
+        }
+
+        .brand-title {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .badge-live {
+            font-size: 10px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: var(--income-bg);
+            color: var(--income);
+            border: 1px solid rgba(var(--brand-primary-rgb), 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-live::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Fintech Theme Switcher */
+        .theme-selector {
+            display: flex;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 100px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .theme-pill {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .theme-pill span.dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .theme-pill.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .privacy-btn {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 16px;
+        }
+
+        .privacy-btn:hover {
+            color: var(--text-main);
+            border-color: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        /* Hero / Net Worth Section */
+        .hero-banner {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 960px) {
+            .hero-banner { grid-template-columns: 1fr; }
+        }
+
+        .balance-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--brand-gradient);
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .balance-meta {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .balance-number-wrap {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .balance-currency {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .balance-val {
+            font-size: clamp(38px, 5vw, 56px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            color: var(--text-main);
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+
+        .balance-trend-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            color: var(--income);
+            background: var(--income-bg);
+            padding: 6px 14px;
+            border-radius: 100px;
+            border: 1px solid rgba(var(--brand-primary-rgb), 0.2);
+            width: fit-content;
+        }
+
+        /* Interactive Robinhood-Style Chart Card */
+        .chart-box {
+            margin-top: 24px;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 18px 20px 14px;
+            position: relative;
+        }
+
+        .chart-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .chart-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .timeframe-pills {
+            display: flex;
+            gap: 4px;
+        }
+
+        .tf-pill {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tf-pill.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--brand-primary);
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 140px;
+            position: relative;
+        }
+
+        #robinhoodChart {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Virtual Card 3D Holographic / Tilt */
+        .virtual-card-container {
+            perspective: 1000px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .fintech-card {
+            width: 100%;
+            aspect-ratio: 1.586;
+            background: linear-gradient(135deg, #1c2434 0%, #0c1017 60%, #151d2c 100%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+        }
+
+        .fintech-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(var(--brand-primary-rgb), 0.2) 0%, transparent 60%);
+            pointer-events: none;
+        }
+
+        .card-chip {
+            width: 42px;
+            height: 32px;
+            background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .card-chip::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            border: 1px solid rgba(0,0,0,0.3);
+            border-radius: 3px;
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-type-logo {
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-number {
+            font-family: var(--font-mono);
+            font-size: clamp(16px, 2.5vw, 20px);
+            letter-spacing: 3px;
+            color: #fff;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .card-holder {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .card-holder strong {
+            display: block;
+            color: #fff;
+            font-size: 14px;
+            margin-top: 2px;
+        }
+
+        .card-status {
+            text-align: right;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--brand-primary);
+        }
+
+        /* Stat Metrics Bar */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        @media (max-width: 900px) {
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .metric-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .metric-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .metric-val {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            font-feature-settings: "tnum";
+            margin-bottom: 4px;
+        }
+
+        .metric-val.income { color: var(--income); }
+        .metric-val.expense { color: var(--expense); }
+        .metric-val.invest { color: var(--accent-cyan); }
+
+        .metric-sub {
+            font-size: 12px;
+            font-family: var(--font-mono);
+            color: var(--text-dark);
+        }
+
+        /* Main Workspace: 2 Columns */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 1.6fr 1.1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        @media (max-width: 990px) {
+            .workspace-grid { grid-template-columns: 1fr; }
+        }
+
+        .section-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-action {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-action:hover {
+            color: var(--text-main);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        /* Transactions Filter Row */
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .filter-btn {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .filter-btn.active {
+            background: rgba(var(--brand-primary-rgb), 0.1);
+            border-color: var(--brand-primary);
+            color: var(--brand-primary);
+        }
+
+        /* Transactions List */
+        .tx-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .tx-list::-webkit-scrollbar { width: 5px; }
+        .tx-list::-webkit-scrollbar-track { background: transparent; }
+        .tx-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+
+        .tx-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+        }
+
+        .tx-item:hover {
+            border-color: rgba(255,255,255,0.12);
+            background: var(--bg-card-hover);
+            transform: translateX(4px);
+        }
+
+        .tx-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .tx-icon-badge {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .tx-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .tx-category-tag {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-dark);
+        }
+
+        .tx-right {
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .tx-amount {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .tx-amount.income { color: var(--income); }
+        .tx-amount.expense { color: var(--expense); }
+
+        .tx-date {
+            font-size: 11px;
+            color: var(--text-dark);
+            font-family: var(--font-mono);
+        }
+
+        .tx-del-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .tx-del-btn:hover {
+            color: var(--expense);
+            background: var(--expense-bg);
+        }
+
+        /* 17yo Simulator Card (Compound Interest Wealth Projector) */
+        .simulator-card {
+            background: linear-gradient(145deg, rgba(var(--brand-primary-rgb), 0.04) 0%, rgba(0, 212, 255, 0.02) 100%), var(--bg-surface);
+            border: 1px solid rgba(var(--brand-primary-rgb), 0.2);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .sim-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .sim-badge {
+            background: rgba(var(--brand-primary-rgb), 0.15);
+            color: var(--brand-primary);
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+        }
+
+        .sim-title {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .sim-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+
+        .sim-slider-group {
+            margin-bottom: 16px;
+        }
+
+        .sim-slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .sim-slider-val {
+            color: var(--brand-primary);
+            font-family: var(--font-mono);
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--bg-card);
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--brand-primary);
+            box-shadow: 0 0 10px var(--brand-glow);
+            cursor: pointer;
+        }
+
+        .sim-result-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sim-result-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .sim-result-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--brand-primary);
+            font-family: var(--font-mono);
+        }
+
+        /* Budget Allocations */
+        .budget-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .budget-item-top {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .budget-bar-track {
+            height: 8px;
+            background: var(--bg-card);
+            border-radius: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .budget-bar-fill {
+            height: 100%;
+            border-radius: 100px;
+            background: var(--brand-gradient);
+            transition: width 0.6s ease;
+        }
+
+        .budget-bar-fill.warning {
+            background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%);
+        }
+
+        .budget-bar-fill.exceeded {
+            background: linear-gradient(135deg, #ff4d6d 0%, #c9184a 100%);
+        }
+
+        /* Modern Floating Action Button (FAB) */
+        .fab-trigger {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: var(--brand-gradient);
+            color: #06080c;
+            border: none;
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 400;
+            cursor: pointer;
+            box-shadow: 0 10px 30px var(--brand-glow);
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .fab-trigger:hover {
+            transform: scale(1.08) rotate(90deg);
+        }
+
+        .fab-trigger:active {
+            transform: scale(0.95);
+        }
+
+        /* Modal Overlay */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 5, 8, 0.75);
+            backdrop-filter: blur(12px);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            padding: 20px;
+        }
+
+        .modal-backdrop.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 480px;
+            padding: 32px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8);
+            transform: scale(0.92) translateY(20px);
+            transition: var(--transition);
+        }
+
+        .modal-backdrop.active .modal-content {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        /* Modal Type Selector */
+        .tx-type-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 4px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+        }
+
+        .type-toggle-btn {
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            padding: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .type-toggle-btn.active.expense {
+            background: var(--expense-bg);
+            color: var(--expense);
+        }
+
+        .type-toggle-btn.active.income {
+            background: var(--income-bg);
+            color: var(--income);
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            color: var(--text-main);
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .input-field:focus {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 3px rgba(var(--brand-primary-rgb), 0.15);
+        }
+
+        .category-select-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .cat-chip {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .cat-chip:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .cat-chip.active {
+            border-color: var(--brand-primary);
+            background: rgba(var(--brand-primary-rgb), 0.1);
+        }
+
+        .cat-chip-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .cat-chip-name {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--brand-gradient);
+            color: #06080c;
+            border: none;
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            font-size: 15px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            box-shadow: 0 8px 24px var(--brand-glow);
+            transition: var(--transition);
+        }
+
+        .btn-submit:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Toast Notifications */
+        .toast-deck {
+            position: fixed;
+            bottom: 24px;
+            left: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 1000;
+        }
+
+        .toast-msg {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideInToast 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideInToast {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Privacy Mode blur */
+        .censored {
+            filter: blur(8px);
+            user-select: none;
+            transition: filter 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-canvas"></div>
+    <div class="ambient-grid"></div>
+
+    <div class="app-wrapper">
+        <!-- Top Nav -->
+        <header class="top-nav">
+            <div class="brand-section">
+                <div class="brand-icon">K</div>
+                <div>
+                    <div class="brand-title">
+                        KAPITAL
+                        <span class="badge-live">Ao Vivo</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <!-- Theme Switcher inspirado em Fintechs -->
+                <div class="theme-selector" title="Estilos inspirados em bancos digitais">
+                    <button class="theme-pill active" onclick="switchTheme('default', this)">
+                        <span class="dot" style="background: #00f59b;"></span> Wise & Robinhood
+                    </button>
+                    <button class="theme-pill" onclick="switchTheme('inter', this)">
+                        <span class="dot" style="background: #ff7a00;"></span> Inter
+                    </button>
+                    <button class="theme-pill" onclick="switchTheme('revolut', this)">
+                        <span class="dot" style="background: #00a6ff;"></span> Revolut
+                    </button>
+                </div>
+
+                <button class="privacy-btn" id="privacyToggle" onclick="togglePrivacy()" title="Modo Privacidade (Ocultar Saldo)">
+                    👁️
+                </button>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <div class="hero-banner">
+            <!-- Balance & Robinhood-style Chart Card -->
+            <div class="balance-card">
+                <div>
+                    <div class="balance-header">
+                        <span class="balance-meta">Patrimônio Líquido</span>
+                        <div class="balance-trend-tag">
+                            <span>▲ +18.4%</span> este mês
+                        </div>
+                    </div>
+
+                    <div class="balance-number-wrap">
+                        <span class="balance-currency">R$</span>
+                        <span class="balance-val" id="totalBalanceVal">4.820,50</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Robinhood Line Chart -->
+                <div class="chart-box">
+                    <div class="chart-header-row">
+                        <span class="chart-title">Evolução do Saldo</span>
+                        <div class="timeframe-pills">
+                            <button class="tf-pill" onclick="updateTimeframe('1D', this)">1D</button>
+                            <button class="tf-pill" onclick="updateTimeframe('1S', this)">1S</button>
+                            <button class="tf-pill active" onclick="updateTimeframe('1M', this)">1M</button>
+                            <button class="tf-pill" onclick="updateTimeframe('1A', this)">1A</button>
+                        </div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="robinhoodChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Virtual Fintech Card (Inter/Revolut/Robinhood Vibe) -->
+            <div class="virtual-card-container">
+                <div class="fintech-card" id="tiltCard">
+                    <div class="card-top">
+                        <div class="card-chip"></div>
+                        <div class="card-type-logo">
+                            <span>⚡</span> KAPITAL <span style="font-weight:400; opacity:0.6; font-size:12px;">BLACK</span>
+                        </div>
+                    </div>
+
+                    <div class="card-number" id="cardDisplayNumber">•••• •••• •••• 8492</div>
+
+                    <div class="card-bottom">
+                        <div class="card-holder">
+                            Titular
+                            <strong>GUSTAVO XAVIER</strong>
+                        </div>
+                        <div class="card-status">
+                            VAL: 09/31<br>
+                            CVV: •••
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4 Metric Cards -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">📈 Entradas (Mês)</div>
+                <div class="metric-val income" id="incomeMetric">R$ 5.450,00</div>
+                <div class="metric-sub">+12% vs mês anterior</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">📉 Saídas (Mês)</div>
+                <div class="metric-val expense" id="expenseMetric">R$ 629,50</div>
+                <div class="metric-sub">87% abaixo da média</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">💎 Reserva de Emergência</div>
+                <div class="metric-val invest" id="savingsMetric">R$ 3.200,00</div>
+                <div class="metric-sub">Rendendo 105% do CDI</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">🎯 Taxa de Poupança</div>
+                <div class="metric-val" id="savingsRateMetric" style="color:var(--brand-primary)">88.4%</div>
+                <div class="metric-sub">Excelente saúde financeira</div>
+            </div>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="workspace-grid">
+            <!-- Left: Transaction Feed -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span>⚡</span> Histórico de Transações
+                    </div>
+                    <button class="btn-action" onclick="resetDemoData()">Restaurar Dados</button>
+                </div>
+
+                <div class="filter-row">
+                    <button class="filter-btn active" onclick="filterTransactions('all', this)">Todas</button>
+                    <button class="filter-btn" onclick="filterTransactions('expense', this)">Saídas</button>
+                    <button class="filter-btn" onclick="filterTransactions('income', this)">Entradas</button>
+                </div>
+
+                <div class="tx-list" id="transactionContainer">
+                    <!-- Dinamicamente populado -->
+                </div>
+            </div>
+
+            <!-- Right: 17yo Projections & Smart Budgets -->
+            <div>
+                <!-- Simulator: Juros Compostos para Jovens -->
+                <div class="simulator-card">
+                    <div class="sim-header">
+                        <span class="sim-badge">PROJEÇÃO 17 ANOS</span>
+                        <span class="sim-title">Máquina de Juros Compostos</span>
+                    </div>
+                    <p class="sim-desc">
+                        Começando agora aos 17 anos com juros de 11% a.a., veja quanto você acumula até completar <strong>21 anos</strong>:
+                    </p>
+
+                    <div class="sim-slider-group">
+                        <div class="sim-slider-label">
+                            <span>Aporte Mensal:</span>
+                            <span class="sim-slider-val" id="sliderValDisplay">R$ 350 /mês</span>
+                        </div>
+                        <input type="range" id="simSlider" min="50" max="2000" step="50" value="350" oninput="calculateCompoundInterest()">
+                    </div>
+
+                    <div class="sim-result-box">
+                        <div>
+                            <div class="sim-result-label">Patrimônio aos 21 anos:</div>
+                            <div class="sim-result-val" id="simTotalProjected">R$ 21.490,00</div>
+                        </div>
+                        <span style="font-size:26px;">🚀</span>
+                    </div>
+                </div>
+
+                <!-- Orçamentos / Limites por Categoria -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>📊</span> Limites do Mês
+                        </div>
+                        <span style="font-size:12px; color:var(--text-muted); font-family:var(--font-mono);">Outubro</span>
+                    </div>
+
+                    <div class="budget-list" id="budgetContainer">
+                        <!-- Gerado via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="fab-trigger" onclick="openModal()" title="Adicionar Transação">+</button>
+
+    <!-- Modal Adicionar Transação -->
+    <div class="modal-backdrop" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Nova Movimentação</div>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+
+            <div class="tx-type-toggle">
+                <button class="type-toggle-btn active expense" id="btnTypeExpense" onclick="setModalTxType('expense')">💸 Saída</button>
+                <button class="type-toggle-btn income" id="btnTypeIncome" onclick="setModalTxType('income')">💰 Entrada</button>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Descrição</label>
+                <input type="text" class="input-field" id="txDesc" placeholder="Ex: Livro de Programação, Lanche..." autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Valor (R$)</label>
+                <input type="number" step="0.01" class="input-field" id="txAmount" placeholder="0,00">
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">Categoria</label>
+                <div class="category-select-grid" id="categoryChips">
+                    <!-- Categorias via JS -->
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="submitNewTransaction()">Confirmar Movimentação</button>
+        </div>
+    </div>
+
+    <!-- Toast Deck -->
+    <div class="toast-deck" id="toastDeck"></div>
+
+    <script>
+        // =======================================================
+        // ESTADO GLOBAL & DADOS (STORAGE)
+        // =======================================================
+        const DEFAULT_TRANSACTIONS = [
+            { id: 1, desc: "Salário / Estágio Dev", amount: 2800.00, type: "income", cat: "trabalho", icon: "💼", date: "Hoje, 09:30" },
+            { id: 2, desc: "Freelance Landing Page", amount: 1650.00, type: "income", cat: "freelance", icon: "💻", date: "Ontem" },
+            { id: 3, desc: "Rendimento CDB Líquido", amount: 1000.00, type: "income", cat: "invest", icon: "📈", date: "18 Out" },
+            { id: 4, desc: "Spotify & Discord Nitro", amount: 49.90, type: "expense", cat: "assinaturas", icon: "📱", date: "17 Out" },
+            { id: 5, desc: "Restaurante com Amigos", amount: 120.00, type: "expense", cat: "comida", icon: "🍔", date: "16 Out" },
+            { id: 6, desc: "Curso Next.js & TypeScript", amount: 189.60, type: "expense", cat: "educacao", icon: "📚", date: "14 Out" },
+            { id: 7, desc: "Uber para o Shopping", amount: 35.00, type: "expense", cat: "transporte", icon: "🚗", date: "12 Out" },
+            { id: 8, desc: "Camiseta Oversized Streetwear", amount: 235.00, type: "expense", cat: "roupas", icon: "👕", date: "10 Out" }
+        ];
+
+        const CATEGORIES = {
+            expense: [
+                { id: "comida", name: "Alimentação", icon: "🍔" },
+                { id: "transporte", name: "Transporte", icon: "🚗" },
+                { id: "assinaturas", name: "Assinaturas", icon: "📱" },
+                { id: "educacao", name: "Educação", icon: "📚" },
+                { id: "roupas", name: "Roupas", icon: "👕" },
+                { id: "jogos", name: "Games/Lazer", icon: "🎮" },
+                { id: "saude", name: "Saúde", icon: "💊" },
+                { id: "outros", name: "Outros", icon: "📦" }
+            ],
+            income: [
+                { id: "trabalho", name: "Trabalho", icon: "💼" },
+                { id: "freelance", name: "Freelance", icon: "💻" },
+                { id: "invest", name: "Rendimentos", icon: "📈" },
+                { id: "mesada", name: "Mesada", icon: "💵" },
+                { id: "presente", name: "Presente", icon: "🎁" },
+                { id: "outros", name: "Outros", icon: "✨" }
+            ]
+        };
+
+        const BUDGET_LIMITS = [
+            { cat: "comida", name: "Alimentação & Lanches", limit: 450, icon: "🍔" },
+            { cat: "assinaturas", name: "Assinaturas & Tech", limit: 120, icon: "📱" },
+            { cat: "roupas", name: "Roupas & Estilo", limit: 300, icon: "👕" },
+            { cat: "jogos", name: "Games & Lazer", limit: 200, icon: "🎮" }
+        ];
+
+        let transactions = JSON.parse(localStorage.getItem('kapital_transactions')) || DEFAULT_TRANSACTIONS;
+        let selectedModalType = 'expense';
+        let selectedCategory = 'comida';
+        let currentFilter = 'all';
+        let isPrivacyMode = false;
+
+        // =======================================================
+        // INICIALIZAÇÃO
+        // =======================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            renderTransactions();
+            updateMetrics();
+            renderBudgets();
+            renderCategoryChips();
+            initChart();
+            init3DCard();
+            calculateCompoundInterest();
+        });
+
+        function saveState() {
+            localStorage.setItem('kapital_transactions', JSON.stringify(transactions));
+            updateMetrics();
+            renderTransactions();
+            renderBudgets();
+            drawChart();
+        }
+
+        // =======================================================
+        // THEME SWITCHER (INSPIRADO EM ROBINHOOD, INTER, REVOLUT)
+        // =======================================================
+        function switchTheme(themeName, btn) {
+            document.querySelectorAll('.theme-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+
+            if (themeName === 'default') {
+                document.documentElement.removeAttribute('data-theme');
+                showToast("Estilo Emerald Growth ativado (Robinhood / Wise)");
+            } else {
+                document.documentElement.setAttribute('data-theme', themeName);
+                if (themeName === 'inter') showToast("Estilo Solar Orange ativado (Banco Inter)");
+                if (themeName === 'revolut') showToast("Estilo Cyber Electric Blue ativado (Revolut)");
+            }
+            drawChart();
+        }
+
+        // =======================================================
+        // CÁLCULOS E MÉTRICAS
+        // =======================================================
+        function updateMetrics() {
+            const incomeTotal = transactions
+                .filter(t => t.type === 'income')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const expenseTotal = transactions
+                .filter(t => t.type === 'expense')
+                .reduce((acc, t) => acc + t.amount, 0);
+
+            const netBalance = incomeTotal - expenseTotal;
+            const savingsRate = incomeTotal > 0 ? (((incomeTotal - expenseTotal) / incomeTotal) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalBalanceVal').textContent = formatCurrency(netBalance);
+            document.getElementById('incomeMetric').textContent = 'R$ ' + formatCurrency(incomeTotal);
+            document.getElementById('expenseMetric').textContent = 'R$ ' + formatCurrency(expenseTotal);
+            document.getElementById('savingsRateMetric').textContent = Math.max(0, savingsRate) + '%';
+        }
+
+        function formatCurrency(val) {
+            return Math.abs(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // =======================================================
+        // TRANSAÇÕES & LISTA
+        // =======================================================
+        function renderTransactions() {
+            const container = document.getElementById('transactionContainer');
+            let list = [...transactions];
+
+            if (currentFilter !== 'all') {
+                list = list.filter(t => t.type === currentFilter);
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding: 40px 10px; color: var(--text-dark);">
+                        <div style="font-size:32px; margin-bottom:8px;">📭</div>
+                        <p style="font-size:13px;">Nenhuma transação encontrada nesta categoria.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = list.map(tx => `
+                <div class="tx-item">
+                    <div class="tx-left">
+                        <div class="tx-icon-badge">${tx.icon || '💸'}</div>
+                        <div>
+                            <div class="tx-title">${tx.desc}</div>
+                            <div class="tx-category-tag">${tx.date} • ${tx.cat.toUpperCase()}</div>
+                        </div>
+                    </div>
+                    <div class="tx-right">
+                        <div>
+                            <div class="tx-amount ${tx.type}">
+                                ${tx.type === 'income' ? '+ R$ ' : '- R$ '} ${formatCurrency(tx.amount)}
+                            </div>
+                        </div>
+                        <button class="tx-del-btn" onclick="deleteTransaction(${tx.id})" title="Remover">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterTransactions(type, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = type;
+            renderTransactions();
+        }
+
+        function deleteTransaction(id) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveState();
+            showToast("Transação removida.");
+        }
+
+        function resetDemoData() {
+            transactions = [...DEFAULT_TRANSACTIONS];
+            saveState();
+            showToast("Dados de demonstração restaurados.");
+        }
+
+        // =======================================================
+        // LIMITES / ORÇAMENTO
+        // =======================================================
+        function renderBudgets() {
+            const container = document.getElementById('budgetContainer');
+            
+            container.innerHTML = BUDGET_LIMITS.map(b => {
+                const spent = transactions
+                    .filter(t => t.type === 'expense' && t.cat === b.cat)
+                    .reduce((acc, t) => acc + t.amount, 0);
+
+                const percent = Math.min((spent / b.limit) * 100, 100);
+                let fillClass = '';
+                if (percent >= 100) fillClass = 'exceeded';
+                else if (percent >= 75) fillClass = 'warning';
+
+                return `
+                    <div>
+                        <div class="budget-item-top">
+                            <span>${b.icon} ${b.name}</span>
+                            <span style="font-family:var(--font-mono); font-size:12px;">
+                                R$ ${formatCurrency(spent)} / <span style="color:var(--text-dark)">R$ ${b.limit}</span>
+                            </span>
+                        </div>
+                        <div class="budget-bar-track">
+                            <div class="budget-bar-fill ${fillClass}" style="width: ${percent}%;"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // =======================================================
+        // SIMULADOR 17 ANOS (JUROS COMPOSTOS)
+        // =======================================================
+        function calculateCompoundInterest() {
+            const monthlyDeposit = parseFloat(document.getElementById('simSlider').value);
+            document.getElementById('sliderValDisplay').textContent = `R$ ${monthlyDeposit} /mês`;
+
+            // De 17 a 21 anos = 4 anos (48 meses)
+            // Taxa estimada: 11% a.a. => ~0.873% ao mês
+            const months = 48;
+            const monthlyRate = 0.00873; 
+
+            // Fórmula de valor futuro de anuidade: PMT * [((1 + i)^n - 1) / i]
+            const futureValue = monthlyDeposit * ((Math.pow(1 + monthlyRate, months) - 1) / monthlyRate);
+
+            document.getElementById('simTotalProjected').textContent = 'R$ ' + Math.round(futureValue).toLocaleString('pt-BR');
+        }
+
+        // =======================================================
+        // GRÁFICO ESTILO ROBINHOOD (CANVAS PURO)
+        // =======================================================
+        const chartDataSets = {
+            '1D': [4620, 4650, 4640, 4710, 4780, 4820],
+            '1S': [4200, 4310, 4280, 4450, 4600, 4750, 4820],
+            '1M': [3100, 3350, 3200, 3600, 3950, 4400, 4820],
+            '1A': [1200, 1800, 2400, 2900, 3600, 4100, 4820]
+        };
+        let currentChartData = chartDataSets['1M'];
+
+        function initChart() {
+            window.addEventListener('resize', drawChart);
+            drawChart();
+        }
+
+        function updateTimeframe(tf, btn) {
+            document.querySelectorAll('.tf-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentChartData = chartDataSets[tf] || chartDataSets['1M'];
+            drawChart();
+        }
+
+        function drawChart() {
+            const canvas = document.getElementById('robinhoodChart');
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+            const width = rect.width;
+            const height = rect.height;
+            const data = currentChartData;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const min = Math.min(...data) * 0.95;
+            const max = Math.max(...data) * 1.05;
+
+            const points = data.map((val, i) => {
+                const x = (i / (data.length - 1)) * width;
+                const y = height - ((val - min) / (max - min)) * (height - 20) - 10;
+                return { x, y };
+            });
+
+            // Cor baseada no tema
+            const computedStyle = getComputedStyle(document.documentElement);
+            const brandColor = computedStyle.getPropertyValue('--brand-primary').trim() || '#00f59b';
+
+            // Gradiente de preenchimento (Glow)
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, brandColor.includes('rgb') ? brandColor : hexToRgba(brandColor, 0.25));
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+
+            // Desenhar área preenchida
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                const xc = (points[i].x + points[i - 1].x) / 2;
+                const yc = (points[i].y + points[i - 1].y) / 2;
+                ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, xc, yc);
+            }
+            ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            // Desenhar Linha de alta precisão
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                const xc = (points[i].x + points[i - 1].x) / 2;
+                const yc = (points[i].y + points[i - 1].y) / 2;
+                ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, xc, yc);
+            }
+            ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+            ctx.strokeStyle = brandColor;
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Ponto pulsante no final (estilo Robinhood)
+            const last = points[points.length - 1];
+            ctx.beginPath();
+            ctx.arc(last.x - 2, last.y, 4, 0, Math.PI * 2);
+            ctx.fillStyle = brandColor;
+            ctx.fill();
+        }
+
+        function hexToRgba(hex, alpha) {
+            let c = hex.replace('#', '');
+            if (c.length === 3) c = c.split('').map(x => x + x).join('');
+            const num = parseInt(c, 16);
+            return `rgba(${(num >> 16) & 255}, ${(num >> 8) & 255}, ${num & 255}, ${alpha})`;
+        }
+
+        // =======================================================
+        // 3D TILT E HOLOGRAFIA NO CARTÃO FINTECH
+        // =======================================================
+        function init3DCard() {
+            const card = document.getElementById('tiltCard');
+            if (!card) return;
+
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((y - centerY) / centerY) * -12;
+                const rotateY = ((x - centerX) / centerX) * 12;
+
+                card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg) scale(1)';
+            });
+        }
+
+        // =======================================================
+        // MODAL & NOVA TRANSAÇÃO
+        // =======================================================
+        function openModal() {
+            document.getElementById('modal').classList.add('active');
+            document.getElementById('txDesc').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.getElementById('txDesc').value = '';
+            document.getElementById('txAmount').value = '';
+        }
+
+        function setModalTxType(type) {
+            selectedModalType = type;
+            const btnExp = document.getElementById('btnTypeExpense');
+            const btnInc = document.getElementById('btnTypeIncome');
+
+            if (type === 'expense') {
+                btnExp.className = 'type-toggle-btn active expense';
+                btnInc.className = 'type-toggle-btn income';
+                selectedCategory = 'comida';
+            } else {
+                btnExp.className = 'type-toggle-btn expense';
+                btnInc.className = 'type-toggle-btn active income';
+                selectedCategory = 'trabalho';
+            }
+            renderCategoryChips();
+        }
+
+        function renderCategoryChips() {
+            const container = document.getElementById('categoryChips');
+            const list = CATEGORIES[selectedModalType];
+
+            container.innerHTML = list.map(c => `
+                <div class="cat-chip ${c.id === selectedCategory ? 'active' : ''}" onclick="selectChip('${c.id}')">
+                    <span class="cat-chip-icon">${c.icon}</span>
+                    <span class="cat-chip-name">${c.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function selectChip(id) {
+            selectedCategory = id;
+            renderCategoryChips();
+        }
+
+        function submitNewTransaction() {
+            const desc = document.getElementById('txDesc').value.trim();
+            const amount = parseFloat(document.getElementById('txAmount').value);
+
+            if (!desc) return showToast("Informe uma descrição!");
+            if (!amount || amount <= 0) return showToast("Valor inválido!");
+
+            const catObj = CATEGORIES[selectedModalType].find(c => c.id === selectedCategory);
+
+            const newTx = {
+                id: Date.now(),
+                desc,
+                amount,
+                type: selectedModalType,
+                cat: selectedCategory,
+                icon: catObj ? catObj.icon : '✨',
+                date: 'Agora'
+            };
+
+            transactions.unshift(newTx);
+            saveState();
+            closeModal();
+            showToast(`${selectedModalType === 'income' ? '💰 Entrada' : '💸 Saída'} registrada com sucesso!`);
+        }
+
+        // =======================================================
+        // MODO PRIVACIDADE (OLHO MÁGICO)
+        // =======================================================
+        function togglePrivacy() {
+            isPrivacyMode = !isPrivacyMode;
+            const targets = [
+                document.getElementById('totalBalanceVal'),
+                document.getElementById('incomeMetric'),
+                document.getElementById('expenseMetric'),
+                document.getElementById('savingsMetric'),
+                document.getElementById('cardDisplayNumber')
+            ];
+
+            targets.forEach(el => {
+                if (el) el.classList.toggle('censored', isPrivacyMode);
+            });
+
+            document.getElementById('privacyToggle').textContent = isPrivacyMode ? '🙈' : '👁️';
+            showToast(isPrivacyMode ? "Modo privacidade ativado." : "Saldos visíveis.");
+        }
+
+        // =======================================================
+        // TOASTS
+        // =======================================================
+        function showToast(msg) {
+            const deck = document.getElementById('toastDeck');
+            const toast = document.createElement('div');
+            toast.className = 'toast-msg';
+            toast.innerHTML = `<span>⚡</span> ${msg}`;
+            deck.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Atalho de Teclado 'N' para Nova Movimentação
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'n' && !document.getElementById('modal').classList.contains('active')) {
+                e.preventDefault();
+                openModal();
+            }
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+</html>
