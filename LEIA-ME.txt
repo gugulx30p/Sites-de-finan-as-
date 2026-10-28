@@ -1,0 +1,7 @@
+VAULT // X — Aporte inicial no simulador
+
+Foi adicionado um campo “Aporte inicial” na Máquina do Tempo. Esse valor é investido uma vez no início e rende por todo o prazo. O aporte mensal continua sendo recorrente.
+
+O simulador usa taxa mensal equivalente derivada da taxa anual efetiva: (1 + taxa anual)^(1/12) - 1. Os aportes mensais são considerados no fim de cada mês.
+O index.html e o script.js mantêm a funcionalidade de importação do extrato do Inter que estava no projeto.
+Abra index.html no Chrome ou use app.py para iniciar o servidor local. Projeções são estimativas, não garantias de rendimento.

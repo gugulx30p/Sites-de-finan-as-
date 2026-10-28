@@ -1,0 +1,9 @@
+SOBRA — iniciador corrigido
+
+1. Coloque este arquivo .bat na mesma pasta do arquivo HTML do SOBRA.
+2. Se o HTML tiver sido baixado como "SOBRA (2).html", o iniciador criará uma cópia chamada "SOBRA.html".
+3. Dê dois cliques em Iniciar_SOBRA_corrigido.bat.
+4. Se aparecer uma mensagem dizendo que a porta 5050 está ocupada, feche a janela preta de um servidor antigo do SOBRA/app.py e execute o .bat novamente.
+5. Deixe a janela preta do servidor aberta enquanto usa o site.
+
+O endereço foi mantido como http://localhost:5050/SOBRA.html para continuar usando os dados do navegador salvos nessa mesma origem. Evite trocar entre localhost e 127.0.0.1, pois o navegador trata os dados locais desses endereços separadamente.
